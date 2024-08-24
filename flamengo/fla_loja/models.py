@@ -6,12 +6,14 @@ class Client(models.Model):
   cpf = models.CharField(max_length=14, default='')
   phone = models.CharField(max_length=15, default='')
   email = models.EmailField(default='')
+  photo = models.ImageField(default='',upload_to=None, height_field=None, width_field=None, max_length=100)
   
   
 class Employee(models.Model):
   name = models.CharField(max_length=100, default='')
   wage = models.FloatField(default=0.0)
   sales_count = models.IntegerField(default=0)
+  photo = models.ImageField(default='', upload_to=None, height_field=None, width_field=None, max_length=100)
 
   
 class Product(models.Model):
@@ -19,6 +21,7 @@ class Product(models.Model):
   description = models.CharField(max_length=255, default='')
   price = models.FloatField(default=0.0)
   quantity_in_stock = models.IntegerField(default=0)
+  image = models.ImageField(default='', upload_to=None, height_field=None, width_field=None, max_length=100)
   
   
 class Shopping(models.Model):

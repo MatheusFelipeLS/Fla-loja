@@ -1,21 +1,25 @@
 {% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="{% static 'fla_loja/style.css' %}">
-  <title>Polls</title>
+  <title>Loja</title>
 </head>
 <body>
   {% if all_products %}
     <ul>
       {% for product in all_products %}
-        <li><a href="{% url 'fla_loja:product' product.id %}">{{ product.name }}</a></li>
+        <li>
+          <a class="u-bare-link" href="{% url 'fla_loja:product' product.id %}">{{ product.name }}</a>
+        </li>
       {% endfor%}
     </ul>
   {% else %}
-    <p>No polls are available.</p>
+    <p>Nenhum produto disponível.</p>
   {% endif %}
 </body>
 </html>
+
