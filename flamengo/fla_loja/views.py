@@ -111,14 +111,17 @@ def delete_client(request, _index):
 @api_view(['GET'])
 def all_employees(request):
     all_employees = Employee.objects.all()
-    employees_data = [{'name': employee.name, 'wage': employee.sales_count} for employee in all_employees]
-    template = loader.get_template("fla_loja/all_employees.html")
+    # employees_data = [{'name': employee.name, 'wage': employee.sales_count} for employee in all_employees]
+    serializer = EmployeeSerializer(all_employees, many=True)
+    # template = loader.get_template("fla_loja/all_employees.html")
     
-    context = {
-        "employees": employees_data,
-    }
+    # context = {
+    #     "employees": employees_data,
+    # }
     
-    return HttpResponse(template.render(context, request))
+    return Response(serializer.data)
+    
+    # return HttpResponse(template.render(context, request))
 
 
 @api_view(['GET'])
