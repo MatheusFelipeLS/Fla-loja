@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
 from django.template import loader
 
@@ -12,6 +12,99 @@ from .serializer import *
 import json
 
 
+# +++++++++++++++++++++++++++++++++++++  Clients  +++++++++++++++++++++++++++++++++++++
+@api_view(['GET'])
+def all_clients(request):
+    all_clients = Client.objects.all()
+    clients_data = [{'name': client.name, 'email': client.email} for client in all_clients]
+    template = loader.get_template("fla_loja/all_clients.html")
+    
+    context = {
+        "clients": clients_data,
+    }
+    
+    return HttpResponse(template.render(context, request))
+
+
+@api_view(['GET'])
+def get_client(request, cpf):
+    try:
+        client = Client.objects.get(cpf=cpf)
+    except:
+        return HttpResponse("Cliente não encontrado.", status=404)
+    
+    client_data = {
+        'name': client.name,
+        'email': client.email,
+        'address': client.address,
+        'cpf': client.cpf,
+        'phone': client.phone
+    }
+    
+    template = loader.get_template("fla_loja/all_clients/client.html")
+    
+    context = {
+        "client": client_data,
+    }
+    
+    return HttpResponse(template.render(context, request))
+
+
+@api_view(['GET', 'PUT'])
+def edit_client(request, email):
+    try:
+        client = Client.objects.get(email=email)
+    except:
+        return HttpResponse("Cliente não encontrado.", status=404)
+    
+    if request.method == 'PUT':
+        data = json.loads(request.body)
+        client.name = data.get('name', client.name)
+        client.email = data.get('email', client.email)
+        client.address = data.get('address', client.address)
+        client.cpf = data.get('cpf', client.cpf)
+        client.phone = data.get('phone', client.phone)
+        client.save()
+        
+        return JsonResponse({'message': 'Cliente atualizado com sucesso!'})
+
+
+@api_view(['GET', 'POST'])
+def add_client(request):
+    if request.method == 'POST':
+
+        name = request.POST.get('name')
+        email = request.POST.get('email')
+        address = request.POST.get('address')
+        cpf = request.POST.get('cpf')
+        phone = request.POST.get('phone')
+
+        if name and email and cpf:
+            if Client.objects.filter(cpf=cpf).exists():
+                return HttpResponse("Erro: Um cliente com esse CPF já existe.", status=400)
+            
+            if Client.objects.filter(email=email).exists():
+                return HttpResponse("Erro: Um cliente com esse email já existe.", status=400)
+            
+            Client.objects.create(name=name, email=email, address=address, cpf=cpf, phone=phone)
+            return redirect('/fla_loja/all_clients')
+
+    return render(request, 'fla_loja/all_clients/add_client.html')
+
+
+@api_view(['GET', 'DELETE'])
+def delete_client(request, email):
+    try:
+        client = Client.objects.get(email=email)
+    except:
+        return HttpResponse("Cliente não encontrado.", status=404)
+    
+    client.delete()
+    return redirect('/fla_loja/all_clients')
+
+
+
+# +++++++++++++++++++++++++++++++++++++  Products  +++++++++++++++++++++++++++++++++++++
 @api_view(['GET'])
 def index(request):
     all_products = Product.objects.all()
