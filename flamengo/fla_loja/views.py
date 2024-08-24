@@ -12,6 +12,8 @@ from .serializer import *
 import json
 
 
+
+
 # +++++++++++++++++++++++++++++++++++++  Clients  +++++++++++++++++++++++++++++++++++++
 @api_view(['GET'])
 def all_clients(request):
@@ -27,9 +29,9 @@ def all_clients(request):
 
 
 @api_view(['GET'])
-def get_client(request, cpf):
+def get_client(request, _index):
     try:
-        client = Client.objects.get(cpf=cpf)
+        client = Client.objects.get(pk=_index)
     except:
         return HttpResponse("Cliente não encontrado.", status=404)
     
@@ -51,9 +53,9 @@ def get_client(request, cpf):
 
 
 @api_view(['GET', 'PUT'])
-def edit_client(request, email):
+def edit_client(request, _index):
     try:
-        client = Client.objects.get(email=email)
+        client = Client.objects.get(pk=_index)
     except:
         return HttpResponse("Cliente não encontrado.", status=404)
     
@@ -93,15 +95,98 @@ def add_client(request):
 
 
 @api_view(['GET', 'DELETE'])
-def delete_client(request, email):
+def delete_client(request, _index):
     try:
-        client = Client.objects.get(email=email)
+        client = Client.objects.get(pk=_index)
     except:
         return HttpResponse("Cliente não encontrado.", status=404)
     
     client.delete()
     return redirect('/fla_loja/all_clients')
 
+
+
+
+# +++++++++++++++++++++++++++++++++++++  Employees  +++++++++++++++++++++++++++++++++++++
+@api_view(['GET'])
+def all_employees(request):
+    all_employees = Employee.objects.all()
+    employees_data = [{'name': employee.name, 'wage': employee.sales_count} for employee in all_employees]
+    template = loader.get_template("fla_loja/all_employees.html")
+    
+    context = {
+        "employees": employees_data,
+    }
+    
+    return HttpResponse(template.render(context, request))
+
+
+@api_view(['GET'])
+def get_employee(request, _index):
+    try:
+        employee = Employee.objects.get(pk=_index)
+    except:
+        return HttpResponse("Funcionário não encontrado.", status=404)
+    
+    employee_data = {
+        'name': employee.name,
+        'wage': employee.wage,
+        'sales_count': employee.sales_count,
+        'photo': employee.photo
+    }
+    
+    template = loader.get_template("fla_loja/all_employees/employee.html")
+    
+    context = {
+        "employee": employee_data,
+    }
+    
+    return HttpResponse(template.render(context, request))
+
+
+@api_view(['GET', 'PUT'])
+def edit_employee(request, _index):
+    try:
+        employee = Employee.objects.get(pk=_index)
+    except:
+        return HttpResponse("Funcionário não encontrado.", status=404)
+    
+    if request.method == 'PUT':
+        data = json.loads(request.body)
+        employee.name = data.get('name', employee.name)
+        employee.wage = data.get('wage', employee.wage)
+        employee.sales_count = data.get('sales_count', employee.sales_count)
+        employee.photo = data.get('photo', employee.photo)
+        employee.save()
+        
+        return JsonResponse({'message': 'Funcionário atualizado com sucesso!'})
+
+
+@api_view(['GET', 'POST'])
+def add_employee(request):
+    if request.method == 'POST':
+
+        name = request.POST.get('name')
+        wage = request.POST.get('wage')
+        sales_count = request.POST.get('sales_count')
+        photo = request.POST.get('photo')
+
+        if name and wage:
+            Employee.objects.create(name=name, wage=wage, sales_count=sales_count, photo=photo)
+            return redirect('/fla_loja/all_employees')
+
+    return render(request, 'fla_loja/all_employees/add_employee.html')
+
+
+@api_view(['GET', 'DELETE'])
+def delete_employee(request, _index):
+    try:
+        employee = Employee.objects.get(pk=_index)
+    except:
+        return HttpResponse("Funcionário não encontrado.", status=404)
+    
+    employee.delete()
+    return redirect('/fla_loja/all_employees')
 
 
 # +++++++++++++++++++++++++++++++++++++  Products  +++++++++++++++++++++++++++++++++++++
