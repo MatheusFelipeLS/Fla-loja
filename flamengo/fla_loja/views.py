@@ -22,6 +22,17 @@ def index(request):
     return HttpResponse(template.render(context, request))
 
 
+# @api_view(['GET'])
+# def index(request):
+  
+#   if request.method == 'GET':
+#     products = Product.objects.all()
+    
+#     serializer = ProductSerializer(products, many=True)
+#     return Response(serializer.data)
+  
+#   return Response(status=status.HTTP_400_BAD_REQUEST)
+
 @api_view(['GET', 'PUT'])
 def get_product_by_name(request, nick):
   try:
