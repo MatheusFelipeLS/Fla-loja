@@ -34,3 +34,4 @@ class Sale(models.Model):
   id_product = models.ForeignKey(Product, on_delete=models.CASCADE)
   id_employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
   data = models.DateTimeField("Date purchased")
+  quantity = models.IntegerField(default=0)

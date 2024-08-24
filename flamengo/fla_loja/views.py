@@ -20,18 +20,6 @@ def index(request):
         "all_products": all_products,
     }
     return HttpResponse(template.render(context, request))
-  
-
-@api_view(['GET'])
-def get_products(request):
-  
-  if request.method == 'GET':
-    products = Product.objects.all()
-    
-    serializer = ProductSerializer(products, many=True)
-    return Response(serializer.data)
-  
-  return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET', 'PUT'])
@@ -48,29 +36,26 @@ def get_product_by_name(request, nick):
         "product": serializer.data,
     }
     return HttpResponse(template.render(context, request))
-    
-    # return Response(serializer.data)
   
-  if request.method == 'PUT':
-    serializer = ProductSerializer(product, data=request.data)
+  
+  # if request.method == 'PUT':
+  #   serializer = ProductSerializer(product, data=request.data)
     
-    if serializer.is_valid():
-      serializer.save() 
-      return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+  #   if serializer.is_valid():
+  #     serializer.save() 
+  #     return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
     
-    return Response(status=status.HTTP_400_BAD_REQUEST)
+  #   return Response(status=status.HTTP_400_BAD_REQUEST)
   
 
 
 @api_view(['GET', 'POST', 'PUT', 'DELETE'])
 def product_manager(request):
   #obtendo dados
-  print("ESTOU AQUI 1", request.method)
   if request.method == 'GET':
     try:
       if request.GET['product']:
         product_nickname = request.GET['product']
-        print("ESTOU AQUI 2", product_nickname)
         
         try: 
           product = Product.objects.get(pk=product_nickname)
@@ -128,3 +113,15 @@ def product_manager(request):
       return Response(status=status.HTTP_202_ACCEPTED)
     except:
       return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+# @api_view(['GET'])
+# def get_products(request):
+  
+#   if request.method == 'GET':
+#     products = Product.objects.all()
+    
+#     serializer = ProductSerializer(products, many=True)
+#     return Response(serializer.data)
+  
+#   return Response(status=status.HTTP_400_BAD_REQUEST)
