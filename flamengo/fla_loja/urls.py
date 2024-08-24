@@ -6,8 +6,7 @@ from . import views
 app_name = "fla_loja"
 
 urlpatterns = [
-  path('', views.index, name='teste'),
-  # path('product/', views.product, name='product'),
+  path('', views.index, name='home'),
   path('product/<str:nick>', views.get_product_by_name, name='product'),
   path('data/', views.product_manager)
 ]
