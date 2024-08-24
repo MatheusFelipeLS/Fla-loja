@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
+from django.template import loader
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -9,6 +10,17 @@ from .models import *
 from .serializer import *
 
 import json
+
+
+@api_view(['GET'])
+def index(request):
+    all_products = Product.objects.all()
+    template = loader.get_template("fla_loja/index.html")
+    context = {
+        "all_products": all_products,
+    }
+    return HttpResponse(template.render(context, request))
+  
 
 @api_view(['GET'])
 def get_products(request):
@@ -25,23 +37,29 @@ def get_products(request):
 @api_view(['GET', 'PUT'])
 def get_product_by_name(request, nick):
   try:
-    user = Product.objects.get(pk=nick)
+    product = Product.objects.get(pk=nick)
   except:
     return Response(status=status.HTTP_404_NOT_FOUND)
   
   if request.method == 'GET':
-    serializer = ProductSerializer(user)
+    serializer = ProductSerializer(product)
+    template = loader.get_template("fla_loja/product.html")
+    context = {
+        "product": serializer.data,
+    }
+    return HttpResponse(template.render(context, request))
     
-    return Response(serializer.data)
+    # return Response(serializer.data)
   
   if request.method == 'PUT':
-    serializer = ProductSerializer(user, data=request.data)
+    serializer = ProductSerializer(product, data=request.data)
     
     if serializer.is_valid():
       serializer.save() 
       return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
     
     return Response(status=status.HTTP_400_BAD_REQUEST)
+  
 
 
 @api_view(['GET', 'POST', 'PUT', 'DELETE'])

@@ -1,11 +1,21 @@
+{% load static %}
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Flamengo Store</title>
+  <link rel="stylesheet" href="{% static 'fla_loja/style.css' %}">
+  <title>Polls</title>
 </head>
 <body>
-  <h1>Flamengo Store</h1>
+  {% if all_products %}
+    <ul>
+      {% for product in all_products %}
+        <li><a href="{% url 'fla_loja:product' product.id %}">{{ product.name }}</a></li>
+      {% endfor%}
+    </ul>
+  {% else %}
+    <p>No polls are available.</p>
+  {% endif %}
 </body>
 </html>
