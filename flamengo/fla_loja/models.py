@@ -6,7 +6,7 @@ class Client(models.Model):
   cpf = models.CharField(max_length=14, default='')
   phone = models.CharField(max_length=15, default='')
   email = models.EmailField(default='')
-  photo = models.ImageField(default='',upload_to=None, height_field=None, width_field=None, max_length=100)
+  photo = models.ImageField(default='', upload_to=None, height_field=None, width_field=None, max_length=100)
   
   
 class Employee(models.Model):

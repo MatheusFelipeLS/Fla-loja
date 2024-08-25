@@ -8,21 +8,90 @@
       style="width: 500; height: 500;"
     >
   </div>
+  <div class="top--home">
+    <a href="{% url 'fla_loja:create_product' %}" class="button button--add" >
+      <span>+</span>
+    </a>
+  </div>
   {% if all_products %}
-    <div class="products" style="display: flex; flex-direction: row; justify-content: space-around;">
+    <div class="products">
       {% for product in all_products %}
       <div class="card" style="width: 18rem;">
         <img src="../../static/fla_loja/images/{{ product.image }}" class="card-img-top" alt="Product image">
         <div class="card-body" style="display: flex; flex-direction: row; align-items: center; align-content: space-between;">
           <div>
             <h5 class="card-title">{{ product.name }}</h5>
-            <a href="{% url 'fla_loja:product' product.id %}" class="btn btn-primary">Acessar</a>
+            <p style="font-size: 16px; font-weight: bold; margin-top: 20px;">{{ product.price }} R$</p>
           </div>
-          <p style="font-size: 16px; font-weight: bold; margin: 20px;">{{ product.price }} R$</p>
+          <a href="{% url 'fla_loja:product' product.id %}" class="btn btn-primary" style="margin-left: 20px;">Acessar</a>
         </div>
       </div>
       {% endfor%}
     </div>
+    <style>
+      .products {
+        display: grid;
+        grid-template-columns: 1fr;
+        grid-template-columns: repeat(3, 1fr);
+        column-gap: 1.25rem;
+        row-gap: 1.25rem;
+        justify-content: center;
+        max-width: 21.875rem;
+        margin: 0 auto; /*sem essa linha, as imagens não estavam centralizadas*/
+      }
+
+      .top--home {
+        max-width: 55rem;
+        margin: 0 auto;
+        margin-bottom: 30px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .button {
+        /* In order to easily position our buttons, we're making them block level elements */
+      
+        /* Removes any outlines added when the button is in focus */
+        outline: none;
+      
+        /* Setting the cursor to pointer indicates to a user that the button is a clickable element */
+        cursor: pointer;
+      
+        /* Again, with buttons we have to be explicit about inheriting font properties */
+        font-size: inherit;
+        font-family: inherit;
+      
+        /* Slows the background colour change effect when we hover over the button, making
+            it take 0.1s with an accelerating colour change */
+        transition: background 0.3s ease-in;
+      }
+
+      .button--add {
+        display: flex;
+        /* position: absolute; */
+        
+        /* bottom: 4rem; distancia do fundo da tela
+        right: 2rem; */
+        height: 2.5rem;
+        width: 2.5rem;
+        border: 3px solid black;
+        border-radius: 50%;
+        color: black;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 1.75rem;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .button--add:hover {
+        color: black;
+        background-color: red;
+      }
+
+    </style>
   {% else %}
     <p>Nenhum produto disponível.</p>
   {% endif %}

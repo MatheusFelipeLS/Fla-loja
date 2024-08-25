@@ -1,0 +1,45 @@
+{% extends 'fla_loja/base.html' %}
+
+{% block content %}
+
+<div style="max-width: 640px; margin: 0 auto">
+  <a href="/" style="max-width: 640px; align-items: center; text-decoration: none; color: black;">
+    <svg style="margin-top: 50px; margin-bottom: 20px;" xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16">
+      <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/>
+    </svg>
+  </a>
+</div>
+
+<form method="POST" id="myForm" class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px; align-content: end;">
+  <div class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px;">
+    <input name="name" class="form-control" id="floatingTextarea" style="resize: none;"></input>
+    <label for="floatingTextarea">Produto</label>
+  </div>
+
+  <div class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px;">
+    <input name="description" class="form-control" id="floatingTextarea2" style="height: 100px; resize: none;"></input>
+    <label for="floatingTextarea2">Descrição</label>
+  </div>
+
+  <div class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px;">
+    <input name="price" class="form-control" id="floatingTextarea3" style="resize: none;"></input>
+    <label for="floatingTextarea3">Preço</label>
+  </div>
+
+  <div class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px;">
+    <input name="quantity_in_stock" class="form-control" id="floatingTextarea4" style="resize: none;"></input>
+    <label for="floatingTextarea4">Quantidade em estoque</label>
+  </div>
+
+  <div class="input-group mb-3" style="max-width: 640px; margin: 0 auto; margin-top: 40px;">
+    <input name="photo" type="file" class="form-control" id="inputGroupFile02">
+    <label class="input-group-text" for="inputGroupFile02">Foto do produto</label>
+  </div>
+
+  <div class="col-12">
+    <button class="btn btn-primary" type="submit" style="max-width: 640px; margin: 0 auto; margin-top: 20px;">
+      Confirmar
+    </button>
+  </div>
+</form>
+{% endblock %}
