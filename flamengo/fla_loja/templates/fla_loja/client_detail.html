@@ -13,6 +13,11 @@
     <p><strong>Telefone:</strong> {{ client.phone }}</p>
     <p><strong>Endereço:</strong> {{ client.address }}</p>
     <p><strong>CPF:</strong> {{ client.cpf }}</p>
+    
+    <div style="margin-top: 20px;">
+      <a href="{% url 'fla_loja:edit_client' client.id %}" class="btn btn-primary">Editar</a>
+      <a href="{% url 'fla_loja:delete_client' client.id %}" class="btn btn-danger">Deletar</a>      
+    </div>
   </div>
 </main>
 {% endblock %}

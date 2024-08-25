@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from django.template import loader
+from django.contrib import messages
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -8,8 +9,7 @@ from rest_framework import status
 
 from .models import *
 from .serializer import *
-
-import json
+from .forms import *
 
 
 
@@ -24,192 +24,122 @@ def clients(request):
     }
     return HttpResponse(template.render(context, request))
 
+
 def client_detail(request, id):
     client = get_object_or_404(Client, id=id)
     return render(request, 'fla_loja/client_detail.html', {'client': client})
 
 
-# @api_view(['GET'])
-# def clients(request):
-#     # Supondo que você tenha um modelo Client para armazenar os dados dos clientes
-#     clients = Client.objects.all()  # Puxa todos os clientes do banco de dados
-#     return render(request, 'fla_loja/clients.html', {'clients': clients})
-
-@api_view(['GET'])
-def all_clients(request):
-    all_clients = Client.objects.all()
-    clients_data = [{'name': client.name, 'email': client.email} for client in all_clients]
-    template = loader.get_template("fla_loja/all_clients.html")
+def edit_client(request, id):
+    client = get_object_or_404(Client, id=id)
     
-    context = {
-        "clients": clients_data,
-    }
+    if request.method == 'POST':
+        form = ClientForm(request.POST, instance=client)
+        if form.is_valid():
+            form.save()
+            return redirect('fla_loja:client_detail', id=client.id)
+    else:
+        form = ClientForm(instance=client)
     
-    return HttpResponse(template.render(context, request))
+    return render(request, 'fla_loja/edit_client.html', {'form': form, 'client': client})
 
 
-@api_view(['GET'])
-def get_client(request, _index):
-    try:
-        client = Client.objects.get(pk=_index)
-    except:
-        return HttpResponse("Cliente não encontrado.", status=404)
+def delete_client(request, id):
+    client = get_object_or_404(Client, id=id)
     
-    client_data = {
-        'name': client.name,
-        'email': client.email,
-        'address': client.address,
-        'cpf': client.cpf,
-        'phone': client.phone
-    }
+    if request.method == 'POST':
+        client.delete()
+        return redirect('fla_loja:clients')
     
-    template = loader.get_template("fla_loja/all_clients/client.html")
-    
-    context = {
-        "client": client_data,
-    }
-    
-    return HttpResponse(template.render(context, request))
+    return render(request, 'fla_loja/confirm_delete_client.html', {'client': client})
 
 
-@api_view(['GET', 'PUT'])
-def edit_client(request, _index):
-    try:
-        client = Client.objects.get(pk=_index)
-    except:
-        return HttpResponse("Cliente não encontrado.", status=404)
-    
-    if request.method == 'PUT':
-        data = json.loads(request.body)
-        client.name = data.get('name', client.name)
-        client.email = data.get('email', client.email)
-        client.address = data.get('address', client.address)
-        client.cpf = data.get('cpf', client.cpf)
-        client.phone = data.get('phone', client.phone)
-        client.save()
-        
-        return JsonResponse({'message': 'Cliente atualizado com sucesso!'})
-
-
-@api_view(['GET', 'POST'])
 def add_client(request):
     if request.method == 'POST':
-
-        name = request.POST.get('name')
-        email = request.POST.get('email')
-        address = request.POST.get('address')
-        cpf = request.POST.get('cpf')
-        phone = request.POST.get('phone')
-
-        if name and email and cpf:
-            if Client.objects.filter(cpf=cpf).exists():
-                return HttpResponse("Erro: Um cliente com esse CPF já existe.", status=400)
+        form = ClientForm(request.POST, request.FILES)  # Adicione request.FILES
+        if form.is_valid():
+            email = form.cleaned_data.get('email')
+            cpf = form.cleaned_data.get('cpf')
             
+            # Verificar se o e-mail ou CPF já existe
             if Client.objects.filter(email=email).exists():
-                return HttpResponse("Erro: Um cliente com esse email já existe.", status=400)
-            
-            Client.objects.create(name=name, email=email, address=address, cpf=cpf, phone=phone)
-            return redirect('/fla_loja/all_clients')
-
-    return render(request, 'fla_loja/all_clients/add_client.html')
-
-
-@api_view(['GET', 'DELETE'])
-def delete_client(request, _index):
-    try:
-        client = Client.objects.get(pk=_index)
-    except:
-        return HttpResponse("Cliente não encontrado.", status=404)
+                messages.error(request, 'Já existe um cliente com esse e-mail.')
+            elif Client.objects.filter(cpf=cpf).exists():
+                messages.error(request, 'Já existe um cliente com esse CPF.')
+            else:
+                # Salvar o novo cliente
+                form.save()
+                messages.success(request, 'Cliente adicionado com sucesso!')
+                return redirect('fla_loja:clients')
     
-    client.delete()
-    return redirect('/fla_loja/all_clients')
+    else:
+        form = ClientForm()
+    
+    return render(request, 'fla_loja/add_client.html', {'form': form})
 
 
 
 
 # +++++++++++++++++++++++++++++++++++++  Employees  +++++++++++++++++++++++++++++++++++++
 @api_view(['GET'])
-def all_employees(request):
+def employees(request):
     all_employees = Employee.objects.all()
-    # employees_data = [{'name': employee.name, 'wage': employee.sales_count} for employee in all_employees]
-    serializer = EmployeeSerializer(all_employees, many=True)
-    # template = loader.get_template("fla_loja/all_employees.html")
-    
-    # context = {
-    #     "employees": employees_data,
-    # }
-    
-    return Response(serializer.data)
-    
-    # return HttpResponse(template.render(context, request))
-
-
-@api_view(['GET'])
-def get_employee(request, _index):
-    try:
-        employee = Employee.objects.get(pk=_index)
-    except:
-        return HttpResponse("Funcionário não encontrado.", status=404)
-    
-    employee_data = {
-        'name': employee.name,
-        'wage': employee.wage,
-        'sales_count': employee.sales_count,
-        'photo': employee.photo
-    }
-    
-    template = loader.get_template("fla_loja/all_employees/employee.html")
-    
+    template = loader.get_template("fla_loja/employees.html")
     context = {
-        "employee": employee_data,
+        "employees": all_employees,
     }
-    
     return HttpResponse(template.render(context, request))
 
 
-@api_view(['GET', 'PUT'])
-def edit_employee(request, _index):
-    try:
-        employee = Employee.objects.get(pk=_index)
-    except:
-        return HttpResponse("Funcionário não encontrado.", status=404)
+def employee_detail(request, id):
+    employee = get_object_or_404(Employee, id=id)
+    return render(request, 'fla_loja/employee_detail.html', {'employee': employee})
+
+
+def edit_employee(request, id):
+    employee = get_object_or_404(Employee, id=id)
     
-    if request.method == 'PUT':
-        data = json.loads(request.body)
-        employee.name = data.get('name', employee.name)
-        employee.wage = data.get('wage', employee.wage)
-        employee.sales_count = data.get('sales_count', employee.sales_count)
-        employee.photo = data.get('photo', employee.photo)
-        employee.save()
-        
-        return JsonResponse({'message': 'Funcionário atualizado com sucesso!'})
+    if request.method == 'POST':
+        form = EmployeeForm(request.POST, instance=employee)
+        if form.is_valid():
+            form.save()
+            return redirect('fla_loja:employee_detail', id=employee.id)
+    else:
+        form = EmployeeForm(instance=employee)
+    
+    return render(request, 'fla_loja/edit_employee.html', {'form': form, 'employee': employee})
 
 
-@api_view(['GET', 'POST'])
+def delete_employee(request, id):
+    employee = get_object_or_404(Employee, id=id)
+    
+    if request.method == 'POST':
+        employee.delete()
+        return redirect('fla_loja:employees')
+    
+    return render(request, 'fla_loja/confirm_delete_employee.html', {'employee': employee})
+
 def add_employee(request):
     if request.method == 'POST':
+        form = EmployeeForm(request.POST, request.FILES)  # Adicione request.FILES para lidar com upload de arquivos
+        if form.is_valid():
+            photo = form.cleaned_data.get('photo')
 
-        name = request.POST.get('name')
-        wage = request.POST.get('wage')
-        sales_count = request.POST.get('sales_count')
-        photo = request.POST.get('photo')
-
-        if name and wage:
-            Employee.objects.create(name=name, wage=wage, sales_count=sales_count, photo=photo)
-            return redirect('/fla_loja/all_employees')
-
-    return render(request, 'fla_loja/all_employees/add_employee.html')
-
-
-@api_view(['GET', 'DELETE'])
-def delete_employee(request, _index):
-    try:
-        employee = Employee.objects.get(pk=_index)
-    except:
-        return HttpResponse("Funcionário não encontrado.", status=404)
+            # Verificar se a foto já existe
+            if photo and Employee.objects.filter(photo=photo).exists():
+                messages.error(request, 'Já existe um empregado com essa foto.')
+            else:
+                # Salvar o novo empregado
+                form.save()
+                messages.success(request, 'Empregado adicionado com sucesso!')
+                return redirect('fla_loja:employees')
     
-    employee.delete()
-    return redirect('/fla_loja/all_employees')
+    else:
+        form = EmployeeForm()
+    
+    return render(request, 'fla_loja/add_employee.html', {'form': form})
+
+
 
 
 # +++++++++++++++++++++++++++++++++++++  Products  +++++++++++++++++++++++++++++++++++++

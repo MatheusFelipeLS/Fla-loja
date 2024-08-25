@@ -1,0 +1,12 @@
+{% extends 'fla_loja/base.html' %}
+
+{% block content %}
+<main class="main main--edit-employee" style="padding: 20px;">
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Salvar alterações</button>
+  </form>
+  <a href="{% url 'fla_loja:employee_detail' employee.id %}" class="btn btn-secondary">Cancelar</a>
+</main>
+{% endblock %}
