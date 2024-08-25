@@ -7,9 +7,14 @@ app_name = "fla_loja"
 
 urlpatterns = [
   path('', views.index, name='home'),
+<<<<<<< HEAD
   
   path('product/<str:nick>', views.get_product_by_name, name='product'),
   path('data/', views.product_manager),
   
   path('employee/', views.all_employees, name='employee')
+=======
+  path('product/<str:_id>', views.get_product_by_name, name='product'),
+  path('data/', views.product_manager)
+>>>>>>> master
 ]

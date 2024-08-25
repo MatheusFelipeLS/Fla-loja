@@ -253,3 +253,76 @@ body {
 .u-bare-link {
     text-decoration: none;
 }
+
+
+:root {
+    --text-dark: #000;
+    --text-light: #fbf2f2;
+    --text-muted: #595959;
+  
+    --background-color: #fff;
+    --accent-colour: #f56565;
+    --accent-colour-2: #3bb54a;
+    --tag-colour: #e5e5e5;
+  
+    --border-octicon: 1px solid #000;
+    --border: 3px solid #000;
+}
+
+:root.dark-mode {
+    --text-dark: #fbf2f2;
+    --text-light: #000;
+    --text-muted: #595959;
+  
+    --background-color: #1c2023;
+    --accent-colour: #f56565;
+    --accent-colour-2: #3bb54a;
+    --tag-colour: var(--accent-colour-2);
+  
+    --border-octicon: 1px solid #fff;
+    --border: 3px solid red;
+}
+
+.footer {
+    background-color: black;
+    padding: 40px 0;
+    margin: 50px 0 0 0;
+    border-top: 3px solid red;
+    color: white;
+    font-size: 12px;
+}
+
+.footer__content {
+    max-width: 640px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: row;
+}
+
+.footer .left {
+    flex-grow: 2; 
+    display: flex;
+    flex-direction: column; 
+}
+
+.footer .right {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: row;
+} 
+
+.footer__column {
+    display: flex;
+    flex-direction: column;
+    margin-left: 50px;
+}
+
+.footer__item {
+    margin-bottom: 5px;
+    color: white;
+    text-decoration: none;
+}
+
+.footer__item:hover {
+    text-decoration: underline;
+}

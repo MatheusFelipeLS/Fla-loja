@@ -215,9 +215,9 @@ def index(request):
 #   return Response(status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET', 'PUT'])
-def get_product_by_name(request, nick):
+def get_product_by_name(request, _id):
   try:
-    product = Product.objects.get(pk=nick)
+    product = Product.objects.get(pk=_id)
   except:
     return Response(status=status.HTTP_404_NOT_FOUND)
   
