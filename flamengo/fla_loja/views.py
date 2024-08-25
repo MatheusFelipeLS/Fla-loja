@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from django.template import loader
 
@@ -15,6 +15,26 @@ import json
 
 
 # +++++++++++++++++++++++++++++++++++++  Clients  +++++++++++++++++++++++++++++++++++++
+@api_view(['GET'])
+def clients(request):
+    all_clients = Client.objects.all()
+    template = loader.get_template("fla_loja/clients.html")
+    context = {
+        "clients": all_clients,
+    }
+    return HttpResponse(template.render(context, request))
+
+def client_detail(request, id):
+    client = get_object_or_404(Client, id=id)
+    return render(request, 'fla_loja/client_detail.html', {'client': client})
+
+
+# @api_view(['GET'])
+# def clients(request):
+#     # Supondo que você tenha um modelo Client para armazenar os dados dos clientes
+#     clients = Client.objects.all()  # Puxa todos os clientes do banco de dados
+#     return render(request, 'fla_loja/clients.html', {'clients': clients})
+
 @api_view(['GET'])
 def all_clients(request):
     all_clients = Client.objects.all()
