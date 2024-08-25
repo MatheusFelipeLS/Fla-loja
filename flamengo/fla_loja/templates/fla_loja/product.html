@@ -9,12 +9,15 @@
       </svg>
     </a>
     <div style="display: flex; flex-direction: row; width: 600px;">
-      <img 
-      src="../../static/fla_loja/images/{{ product.image }}" 
-      class="card-img-top" 
-        alt="Product image"
-        style="width: 300px; height: 300px;"
-      >
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <img 
+          src="../../static/fla_loja/images/{{ product.image }}" 
+          class="card-img-top" 
+          alt="Product image"
+          style="width: 300px; height: 300px;"
+        >
+        <a href="#" class="btn btn-primary" style="margin-top: 10px;">Adicionar ao Carrinho</a>
+      </div>
       <article class="project" style="margin-left: 20px;">
         <article class="project__content">
           <div style="margin: 0 auto; align-items: center; justify-content: space-around;">
@@ -36,8 +39,8 @@
               style="margin-top: 20px; margin-bottom: 20px;">
               {{ product.name }}
             </h2>
-            <p>{{product.description}}</p>
-            <p>Preço: {{ product.price }} R$</p>
+            <p>{{ product.description }}</p>
+            <p>Preço: R${{ product.price }} </p>
             <p>Em estoque: {{ product.quantity_in_stock }} un.</p>
           </article>
         </article>

@@ -1,0 +1,12 @@
+{% extends 'fla_loja/base.html' %}
+
+{% block content %}
+<main class="main main--delete-employee" style="padding: 20px;">
+  <p>Você tem certeza que deseja excluir o Vendedor {{ employee.name }}?</p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Deletar</button>
+    <a href="{% url 'fla_loja:employee_detail' employee.id %}" class="btn btn-secondary">Cancelar</a>
+  </form>
+</main>
+{% endblock %}

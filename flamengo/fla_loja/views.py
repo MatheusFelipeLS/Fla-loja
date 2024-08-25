@@ -1,7 +1,8 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404, redirect
 from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
 from django.template import loader
 from django.urls import reverse
+from django.contrib import messages
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -9,10 +10,140 @@ from rest_framework import status
 
 from .models import *
 from .serializer import *
+from .forms import *
 
-import json
 
 
+
+# +++++++++++++++++++++++++++++++++++++  Clients  +++++++++++++++++++++++++++++++++++++
+@api_view(['GET'])
+def clients(request):
+    all_clients = Client.objects.all()
+    template = loader.get_template("fla_loja/clients.html")
+    context = {
+        "clients": all_clients,
+    }
+    return HttpResponse(template.render(context, request))
+
+
+def client_detail(request, id):
+    client = get_object_or_404(Client, id=id)
+    return render(request, 'fla_loja/client_detail.html', {'client': client})
+
+
+def edit_client(request, id):
+    client = get_object_or_404(Client, id=id)
+    
+    if request.method == 'POST':
+        form = ClientForm(request.POST, instance=client)
+        if form.is_valid():
+            form.save()
+            return redirect('fla_loja:client_detail', id=client.id)
+    else:
+        form = ClientForm(instance=client)
+    
+    return render(request, 'fla_loja/edit_client.html', {'form': form, 'client': client})
+
+
+def delete_client(request, id):
+    client = get_object_or_404(Client, id=id)
+    
+    if request.method == 'POST':
+        client.delete()
+        return redirect('fla_loja:clients')
+    
+    return render(request, 'fla_loja/confirm_delete_client.html', {'client': client})
+
+
+def add_client(request):
+    if request.method == 'POST':
+        form = ClientForm(request.POST, request.FILES)  # Adicione request.FILES
+        if form.is_valid():
+            email = form.cleaned_data.get('email')
+            cpf = form.cleaned_data.get('cpf')
+            
+            # Verificar se o e-mail ou CPF já existe
+            if Client.objects.filter(email=email).exists():
+                messages.error(request, 'Já existe um cliente com esse e-mail.')
+            elif Client.objects.filter(cpf=cpf).exists():
+                messages.error(request, 'Já existe um cliente com esse CPF.')
+            else:
+                # Salvar o novo cliente
+                form.save()
+                messages.success(request, 'Cliente adicionado com sucesso!')
+                return redirect('fla_loja:clients')
+    
+    else:
+        form = ClientForm()
+    
+    return render(request, 'fla_loja/add_client.html', {'form': form})
+
+
+
+
+# +++++++++++++++++++++++++++++++++++++  Employees  +++++++++++++++++++++++++++++++++++++
+@api_view(['GET'])
+def employees(request):
+    all_employees = Employee.objects.all()
+    template = loader.get_template("fla_loja/employees.html")
+    context = {
+        "employees": all_employees,
+    }
+    return HttpResponse(template.render(context, request))
+
+
+def employee_detail(request, id):
+    employee = get_object_or_404(Employee, id=id)
+    return render(request, 'fla_loja/employee_detail.html', {'employee': employee})
+
+
+def edit_employee(request, id):
+    employee = get_object_or_404(Employee, id=id)
+    
+    if request.method == 'POST':
+        form = EmployeeForm(request.POST, instance=employee)
+        if form.is_valid():
+            form.save()
+            return redirect('fla_loja:employee_detail', id=employee.id)
+    else:
+        form = EmployeeForm(instance=employee)
+    
+    return render(request, 'fla_loja/edit_employee.html', {'form': form, 'employee': employee})
+
+
+def delete_employee(request, id):
+    employee = get_object_or_404(Employee, id=id)
+    
+    if request.method == 'POST':
+        employee.delete()
+        return redirect('fla_loja:employees')
+    
+    return render(request, 'fla_loja/confirm_delete_employee.html', {'employee': employee})
+
+def add_employee(request):
+    if request.method == 'POST':
+        form = EmployeeForm(request.POST, request.FILES)  # Adicione request.FILES para lidar com upload de arquivos
+        if form.is_valid():
+            photo = form.cleaned_data.get('photo')
+
+            # Verificar se a foto já existe
+            if photo and Employee.objects.filter(photo=photo).exists():
+                messages.error(request, 'Já existe um empregado com essa foto.')
+            else:
+                # Salvar o novo empregado
+                form.save()
+                messages.success(request, 'Empregado adicionado com sucesso!')
+                return redirect('fla_loja:employees')
+    
+    else:
+        form = EmployeeForm()
+    
+    return render(request, 'fla_loja/add_employee.html', {'form': form})
+
+
+
+
+# +++++++++++++++++++++++++++++++++++++  Products  +++++++++++++++++++++++++++++++++++++
 @api_view(['GET'])
 def index(request):
     all_products = Product.objects.all()
