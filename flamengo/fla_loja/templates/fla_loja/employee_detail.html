@@ -8,7 +8,13 @@
         <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/>
       </svg>
     </a>
-    <p><strong>Foto:</strong> {{ employee.photo }}</p>
+    <p><strong>Foto:</strong></p>
+    {% if employee.photo %}
+      <img src="{{ employee.photo.url }}" alt="Foto do Funcionário" style="width: 150px; height: auto;">
+    {% else %}
+      <p>Nenhuma foto disponível.</p>
+    {% endif %}
+    <p><strong>ID:</strong> {{ employee.id }}</p>
     <p><strong>Nome:</strong> {{ employee.name }}</p>
     <p><strong>Salário:</strong> {{ employee.wage }}</p>
     <p><strong>Qtd Vendas:</strong> {{ employee.sales_count }}</p>

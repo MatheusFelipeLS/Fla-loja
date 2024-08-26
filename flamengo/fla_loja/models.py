@@ -6,7 +6,7 @@ class Client(models.Model):
   cpf = models.CharField(max_length=14, default='')
   phone = models.CharField(max_length=15, default='')
   email = models.EmailField(default='')
-  photo = models.ImageField(default='', upload_to=None, height_field=None, width_field=None, max_length=100)
+  photo = models.ImageField(default='',upload_to=None, height_field=None, width_field=None, max_length=100)
   
   
 class Employee(models.Model):
@@ -33,5 +33,5 @@ class Sale(models.Model):
   id_shopping = models.ForeignKey(Shopping, on_delete=models.CASCADE)
   id_product = models.ForeignKey(Product, on_delete=models.CASCADE)
   id_employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
-  data = models.DateTimeField("Date purchased")
+  data = models.DateField("Date purchased")
   quantity = models.IntegerField(default=0)
