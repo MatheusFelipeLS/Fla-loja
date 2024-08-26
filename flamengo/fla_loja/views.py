@@ -1,8 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404, redirect
-from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
+from django.http import HttpResponse, JsonResponse, HttpResponseRedirect, HttpResponseBadRequest
 from django.template import loader
 from django.urls import reverse
 from django.contrib import messages
+from django.utils.dateparse import parse_datetime
+
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -350,3 +352,103 @@ def product_manager(request):
       return Response(status=status.HTTP_202_ACCEPTED)
     except:
       return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+def add_product(request):
+    if request.method == 'POST':
+        form = ProductForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Produto adicionado com sucesso!')
+            return redirect('/')
+    else:
+        form = ProductForm()
+
+    return render(request, 'fla_loja/add_product.html', {'form': form})
+
+
+
+
+# +++++++++++++++++++++++++++++++++++++  Shopping  +++++++++++++++++++++++++++++++++++++
+def shopping_cart(request):
+    shoppings = Shopping.objects.all()
+    
+    cart_data = []
+    for shopping in shoppings:
+        client = shopping.id_client
+        total_products = Sale.objects.filter(id_shopping=shopping).aggregate(total=models.Sum('quantity'))['total'] or 0
+        total_value = shopping.total_value
+        cart_data.append({
+            'client_name': client.name,
+            'total_products': total_products,
+            'total_value': total_value,
+            'shopping_id': shopping.id
+        })
+
+    context = {
+        'cart_data': cart_data
+    }
+    
+    return render(request, 'fla_loja/shopping_cart.html', context)
+
+
+def shopping_detail(request, id):
+    shopping = get_object_or_404(Shopping, id=id)
+    
+    sales = Sale.objects.filter(id_shopping=shopping)
+
+    products_data = []
+    for sale in sales:
+        product = sale.id_product
+        employee = sale.id_employee
+        products_data.append({
+            'product_name': product.name,
+            'quantity': sale.quantity,
+            'employee_name': employee.name,
+            'date_purchased': sale.data,
+            'product_price': product.price,
+            'total_price': sale.quantity * product.price
+        })
+
+    context = {
+        'shopping': shopping,
+        'products_data': products_data,
+        'client': shopping.id_client,
+        'total_value': shopping.total_value
+    }
+    
+    return render(request, 'fla_loja/shopping_detail.html', context)
+
+
+def add_to_cart(request, product_id):
+    if request.method == 'POST':
+        client_id = request.POST.get('client_id')
+        employee_id = request.POST.get('employee_id')
+        quantity = request.POST.get('quantity')
+        date_purchased_str = request.POST.get('date_purchased')
+
+        if not date_purchased_str:
+            return HttpResponseBadRequest("A data e hora são obrigatórios.")
+
+        # Converter a data do formato string para datetime
+        date_purchased = parse_datetime(date_purchased_str)
+        if date_purchased is None:
+            return HttpResponseBadRequest("Formato de data e hora inválido. Use o formato YYYY-MM-DDTHH:MM.")
+
+        # Obter cliente, funcionário e produto com tratamento de erro
+        client = get_object_or_404(Client, id=client_id)
+        employee = get_object_or_404(Employee, id=employee_id)
+        product = get_object_or_404(Product, id=product_id)
+
+        # Criar ou atualizar a compra
+        shopping = Shopping.objects.create(id_client=client)
+        Sale.objects.create(id_shopping=shopping, id_product=product, id_employee=employee, quantity=quantity, data=date_purchased)
+
+        # Redirecionar para a página principal após a adição
+        messages.success(request, 'Produto adicionado ao carrinho com sucesso!')
+        return redirect('/')
+
+    return render(request, 'fla_loja/add_to_cart.html', {'product_id': product_id})
+
+
+
