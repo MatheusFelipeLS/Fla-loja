@@ -2,14 +2,15 @@
 
 {% block content %}
 <main class="main main--add-client" style="padding: 20px;">
-  <h1>Adicionar Novo Cliente</h1>
-  <hr style="border: 1px solid black;">
-
-  <form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-success">Adicionar Cliente</button>
-    <a href="{% url 'fla_loja:clients' %}" class="btn btn-secondary" style="margin-left: 10px;">Cancelar</a>
-  </form>
+  <div style="display: flex; flex-direction: column;">
+      <h2>Adicionar Novo Cliente</h2>
+    
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="btn btn-success">Adicionar Cliente</button>
+      <a href="{% url 'fla_loja:clients' %}" class="btn btn-secondary" style="margin-left: 10px;">Cancelar</a>
+    </form>
+  </div>
 </main>
 {% endblock %}

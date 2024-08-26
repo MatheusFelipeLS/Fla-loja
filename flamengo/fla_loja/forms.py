@@ -10,3 +10,10 @@ class EmployeeForm(forms.ModelForm):
     class Meta:
         model = Employee
         fields = ['name', 'wage', 'sales_count', 'photo']
+        
+
+class ProductForm(forms.ModelForm):
+    class Meta:
+        model = Product
+        fields = ['name', 'description', 'price', 'quantity_in_stock', 'image']
+        

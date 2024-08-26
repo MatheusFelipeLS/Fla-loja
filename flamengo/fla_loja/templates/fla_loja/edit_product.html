@@ -10,7 +10,8 @@
   </a>
 </div>
 
-<form id="myForm" class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px; align-content: end;">
+<form action="{% url 'fla_loja:product' product.id %}" method="post" id="myForm" class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px; align-content: end;">
+  {% csrf_token %}
   <div class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px;">
     <input name="name" class="form-control" value="{{ product.name }}" placeholder="{{ product.name }}" id="floatingTextarea" style="resize: none;"></input>
     <label for="floatingTextarea">Produto</label>
@@ -32,7 +33,7 @@
   </div>
 
   <div class="input-group mb-3" style="max-width: 640px; margin: 0 auto; margin-top: 40px;">
-    <input name="photo" type="file" class="form-control" id="inputGroupFile02">
+    <input name="photo" type="file" class="form-control" id="inputGroupFile02" value="{{ product.image }}" placeholder="{{ product.image }}">
     <label class="input-group-text" for="inputGroupFile02">Foto do produto</label>
   </div>
 

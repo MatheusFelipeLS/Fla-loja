@@ -1,5 +1,7 @@
 from django.urls import path
 from . import views
+from django.conf.urls.static import static
+from django.conf import settings
 
 app_name = "fla_loja"
 
@@ -26,3 +28,5 @@ urlpatterns = [
     path('employee/<int:id>/delete/', views.delete_employee, name='delete_employee'),
     path('add_employee/', views.add_employee, name='add_employee'),
 ]
+
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

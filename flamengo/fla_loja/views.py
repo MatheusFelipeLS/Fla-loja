@@ -3,7 +3,7 @@ from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
 from django.template import loader
 from django.urls import reverse
 from django.contrib import messages
-
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -12,7 +12,7 @@ from .models import *
 from .serializer import *
 from .forms import *
 
-
+import shutil
 
 
 # +++++++++++++++++++++++++++++++++++++  Clients  +++++++++++++++++++++++++++++++++++++
@@ -144,7 +144,7 @@ def add_employee(request):
 
 
 # +++++++++++++++++++++++++++++++++++++  Products  +++++++++++++++++++++++++++++++++++++
-@api_view(['GET'])
+@api_view(['GET', 'POST'])
 def index(request):
     all_products = Product.objects.all()
     template = loader.get_template("fla_loja/index.html")
@@ -154,7 +154,7 @@ def index(request):
     return HttpResponse(template.render(context, request))
 
 
-@api_view(['GET', 'PUT'])
+@api_view(['GET', 'POST', 'PUT'])
 def get_product_by_name(request, _id):
   try:
     product = Product.objects.get(pk=_id)
@@ -163,6 +163,17 @@ def get_product_by_name(request, _id):
   
   if request.method == 'GET':
     serializer = ProductSerializer(product)
+    template = loader.get_template("fla_loja/product.html")
+    context = {
+        "product": serializer.data,
+    }
+    return HttpResponse(template.render(context, request))
+  
+  if request.method == 'POST':
+    serializer = ProductSerializer(product, data=request.data)
+    
+    if serializer.is_valid():
+      serializer.save() 
     template = loader.get_template("fla_loja/product.html")
     context = {
         "product": serializer.data,
@@ -190,7 +201,7 @@ def edit_product(request, _id):
   
   if request.method == 'GET':
     serializer = ProductSerializer(product)
-    template = loader.get_template("fla_loja/update_product.html")
+    template = loader.get_template("fla_loja/edit_product.html")
     context = {
         "product": serializer.data,
     }
@@ -201,34 +212,58 @@ def edit_product(request, _id):
     
     if serializer.is_valid():
       serializer.save() 
-      return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+      print("aaaaa", request.path)
+      redirect(reverse(request.path))
+      # return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
     
     return Response(status=status.HTTP_400_BAD_REQUEST)
 
+#funcional
+# @api_view(['GET', 'POST'])
+# def create_product(request):
+#   if request.method == 'POST':
+#     form = ProductForm(request.POST, request.FILES)  # Adicione request.FILES para lidar com upload de arquivos
+#     if form.is_valid():
+#         image = form.cleaned_data.get('image')
+
+#         # Verificar se a foto já existe
+#         if image and Product.objects.filter(image=image).exists():
+#             messages.error(request, 'Já existe um empregado com essa foto.')
+#         else:
+#             # Salvar o novo empregado
+#             form.save()
+#             messages.success(request, 'Empregado adicionado com sucesso!')
+#             return redirect('fla_loja:index')
+
+#   else:
+#       form = ProductForm()
+  
+#   return render(request, 'fla_loja/add_product.html', {'form': form})
 
 @api_view(['GET', 'POST'])
 def create_product(request):
   
   if request.method == 'GET':
     
-    template = loader.get_template("fla_loja/create_product.html")
-    context = {
-      "a": 1,
-    }
+    template = loader.get_template("fla_loja/create_product_copy.html")
+    context = {"a": 1,}
     return HttpResponse(template.render(context, request))
   
   if request.method == 'POST':
+    new_product = request.data.copy()
     
-    new_product = request.data
-    
-    print("new Product: ", new_product)
+    # Remova o csrfmiddlewaretoken
+    if 'csrfmiddlewaretoken' in new_product:
+        del new_product['csrfmiddlewaretoken']
     
     serializer = ProductSerializer(data=new_product)
     
     if(serializer.is_valid()):
       serializer.save()
-      return Response(serializer.data, status=status.HTTP_201_CREATED)
+      
+      return redirect(request.path)
     
+    print(serializer.errors)
     return Response(status=status.HTTP_400_BAD_REQUEST) 
   
   
