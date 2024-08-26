@@ -17,3 +17,9 @@ class ProductForm(forms.ModelForm):
         model = Product
         fields = ['name', 'description', 'price', 'quantity_in_stock', 'image']
         
+        
+class SaleForm(forms.ModelForm):
+    class Meta:
+        model = Sale
+        fields = ['id_client', 'id_product', 'id_employee', 'data', 'quantity']
+        

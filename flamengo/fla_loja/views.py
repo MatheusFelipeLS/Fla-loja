@@ -15,6 +15,7 @@ from .serializer import *
 from .forms import *
 
 import shutil
+from datetime import date
 
 
 # +++++++++++++++++++++++++++++++++++++  Clients  +++++++++++++++++++++++++++++++++++++
@@ -79,7 +80,7 @@ def add_client(request):
     if(serializer.is_valid()):
       serializer.save()
       
-      return redirect(request.path)
+      return redirect('/clients/')
     
     print(serializer.errors)
     return Response(status=status.HTTP_400_BAD_REQUEST) 
@@ -148,10 +149,11 @@ def add_employee(request):
     if(serializer.is_valid()):
       serializer.save()
       
-      return redirect(request.path)
+      return redirect('/employees/')
     
     print(serializer.errors)
     return Response(status=status.HTTP_400_BAD_REQUEST) 
+  
 
 # +++++++++++++++++++++++++++++++++++++  Products  +++++++++++++++++++++++++++++++++++++
 @api_view(['GET', 'POST'])
@@ -226,6 +228,7 @@ def edit_product(request, _id):
     
     return Response(status=status.HTTP_400_BAD_REQUEST)
 
+
 @api_view(['GET', 'POST'])
 def create_product(request):
   
@@ -242,7 +245,6 @@ def create_product(request):
     if 'csrfmiddlewaretoken' in new_product:
         del new_product['csrfmiddlewaretoken']
     
-    print("new_product: ", new_product)
     serializer = ProductSerializer(data=new_product)
     
     if(serializer.is_valid()):
@@ -270,75 +272,8 @@ def delete_product(request, _id):
         "all_products": all_products,
     }
     
-    # return HttpResponse(template.render(context, request), status=status.HTTP_202_ACCEPTED)
     return redirect('/')
 
-
-@api_view(['GET', 'POST', 'PUT', 'DELETE'])
-def product_manager(request):
-  #obtendo dados
-  if request.method == 'GET':
-    try:
-      if request.GET['product']:
-        product_nickname = request.GET['product']
-        
-        try: 
-          product = Product.objects.get(pk=product_nickname)
-        except:
-          return Response(status=status.HTTP_404_NOT_FOUND)      
-        
-        serializer = ProductSerializer(product)
-        
-        return Response(serializer.data)
-      
-      else:
-        return Response(status=status.HTTP_400_BAD_REQUEST)
-      
-    except:
-      return Response(status=status.HTTP_400_BAD_REQUEST)
-    
-    
-  #criando dados
-  if request.method == 'POST':
-    new_product = request.data
-    
-    serializer = ProductSerializer(data=new_product)
-    
-    if(serializer.is_valid()):
-      serializer.save()
-      return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
-    return Response(status=status.HTTP_400_BAD_REQUEST) 
-  
-  
-  #editando dados
-  if request.method == 'PUT':
-    product_nickname = request.data['product_nickname']
-    
-    try:
-      updated_product = Product.objects.get(pk=product_nickname)
-    except:
-      return Response(status=status.HTTP_404_NOT_FOUND)
-    
-      
-    serializer = ProductSerializer(updated_product, data=request.data)
-    
-    if(serializer.is_valid()):
-      serializer.save()
-      return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
-    
-    return Response(status=status.HTTP_400_BAD_REQUEST) 
- 
-  
-  #deletando dados
-  if request.method == 'DELETE':
-    
-    try:
-      product_to_delete = Product.objects.get(pk=request.data["product_nickname"])
-      product_to_delete.delete()
-      return Response(status=status.HTTP_202_ACCEPTED)
-    except:
-      return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 def add_product(request):
@@ -355,7 +290,6 @@ def add_product(request):
 
 
 
-
 # +++++++++++++++++++++++++++++++++++++  Sales  +++++++++++++++++++++++++++++++++++++
 def sales(request):
     # Obter todas as vendas
@@ -364,15 +298,25 @@ def sales(request):
     # Preparar os dados para a tabela
     sales_data = []
     for sale in sales:
-        sales_data.append({
-            'id': sale.id,  # Inclua o ID da venda aqui
-            'client_name': sale.id_client.name,
-            'product_name': sale.id_product.name,
-            'quantity': sale.quantity,
-            'total_price': sale.quantity * sale.id_product.price,
-            'employee_name': sale.id_employee.name,  # Nome do vendedor
-            'date': sale.data.strftime('%Y-%m-%d')  # Data da compra no formato YYYY-MM-DD
-        })
+      client = "Indisp."
+      employee = "Indisp."
+      product = "Indisp."
+      if sale.id_client:
+        client = sale.id_client.name
+      if sale.id_employee:
+        employee = sale.id_employee.name
+      if sale.id_product:
+        product = sale.id_product.name 
+        
+      sales_data.append({
+          'id': sale.id,  # Inclua o ID da venda aqui
+          'client_name': client,
+          'product_name': product,
+          'quantity': sale.quantity,
+          'total_price': sale.quantity * sale.id_product.price,
+          'employee_name': employee,  # Nome do vendedor
+          'date': sale.data.strftime('%Y-%m-%d')  # Data da compra no formato YYYY-MM-DD
+      })
     
     context = {
         'sales_data': sales_data
@@ -446,25 +390,66 @@ def sale_detail(request, sale_id):
     }
     
     return render(request, 'fla_loja/sale_detail.html', context)
+  
+
+@api_view(['GET', 'POST', 'DELETE'])
+def delete_sale(request, _id):
+  if request.method == 'GET':
+    try:
+      sale_to_delete = Sale.objects.get(pk=_id)
+    except:
+      return Response(status=status.HTTP_404_NOT_FOUND)
+    
+    sale_to_delete.delete()
+    
+    return redirect('/sales/')
 
 
-def delete_sale(request, sale_id):
-    if request.method == "POST":
-        sale = get_object_or_404(Sale, id=sale_id)
-        sale.delete()
-        # Redirecionar de volta para a página de vendas após a exclusão
-        return redirect('sales')
-    # Opcional: Pode retornar um erro se a requisição não for POST
-    return redirect('sales')
-
-
-
+def edit_sale(request, _id):
+    sale = get_object_or_404(Sale, id=_id)
+    print("aaaa sale:", sale.quantity)
+    if sale.id_product:
+      product = get_object_or_404(Product, id=sale.id_product.id)
+    if sale.id_employee:
+      employee = get_object_or_404(Employee, id=sale.id_employee.id)
+    
+    if request.method == 'POST':
+        print("product:", product.quantity_in_stock)
+        print("sale:", sale.quantity)
+        print("request:", int(request.POST.get('quantity')))
+        product.quantity_in_stock += sale.quantity
+        employee.sales_count += sale.quantity
+        form = SaleForm(request.POST, instance=sale)
+        if form.is_valid():
+            # product.quantity_in_stock += sale.quantity
+            product.quantity_in_stock -= int(request.POST.get('quantity'))
+            print("product:", product.quantity_in_stock)
+            print("sale:", sale.quantity)
+            print("request:", int(request.POST.get('quantity')))
+            # product.save()
+            
+            # employee.sales_count += sale.quantity
+            employee.sales_count -= int(request.POST.get('quantity'))
+            # employee.save()
+            
+            prod_serializer = ProductSerializer(data=product)
+            if prod_serializer.is_valid():
+              prod_serializer.save()
+              
+            employee_serializer = EmployeeSerializer(data=employee)
+            if employee_serializer.is_valid():
+              employee_serializer.save()
+            
+            form.save()
+            return redirect('/sales/')
+        product.quantity_in_stock -= sale.quantity
+        employee.sales_count -= sale.quantity
+    else:
+        form = SaleForm(instance=sale)
+    
+    return render(request, 'fla_loja/edit_sale.html', {'form': form, 'sale': sale})
 
 # +++++++++++++++++++++++++++++++++++++  Estoque  +++++++++++++++++++++++++++++++++++++
-# views.py
-from django.shortcuts import render
-from .models import Product
-
 def stock(request):
     # Obter todos os produtos
     products = Product.objects.all()
