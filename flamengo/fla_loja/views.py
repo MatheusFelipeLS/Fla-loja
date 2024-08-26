@@ -21,7 +21,8 @@ import shutil
 @api_view(['GET'])
 def clients(request):
     all_clients = Client.objects.all()
-    template = loader.get_template("fla_loja/clients.html")
+    # template = loader.get_template("fla_loja/clients.html")
+    template = loader.get_template("fla_loja/clients_copy.html")
     context = {
         "clients": all_clients,
     }
@@ -57,37 +58,40 @@ def delete_client(request, id):
     return render(request, 'fla_loja/confirm_delete_client.html', {'client': client})
 
 
+@api_view(['GET', 'POST'])
 def add_client(request):
-    if request.method == 'POST':
-        form = ClientForm(request.POST, request.FILES)  # Adicione request.FILES
-        if form.is_valid():
-            email = form.cleaned_data.get('email')
-            cpf = form.cleaned_data.get('cpf')
-            
-            # Verificar se o e-mail ou CPF já existe
-            if Client.objects.filter(email=email).exists():
-                messages.error(request, 'Já existe um cliente com esse e-mail.')
-            elif Client.objects.filter(cpf=cpf).exists():
-                messages.error(request, 'Já existe um cliente com esse CPF.')
-            else:
-                # Salvar o novo cliente
-                form.save()
-                messages.success(request, 'Cliente adicionado com sucesso!')
-                return redirect('fla_loja:clients')
+  
+  if request.method == 'GET':
     
-    else:
-        form = ClientForm()
+    template = loader.get_template("fla_loja/add_client_copy.html")
+    context = {"a": 1,}
+    return HttpResponse(template.render(context, request))
+  
+  if request.method == 'POST':
+    new_client = request.data.copy()
     
-    return render(request, 'fla_loja/add_client.html', {'form': form})
-
-
+    # Remova o csrfmiddlewaretoken
+    if 'csrfmiddlewaretoken' in new_client:
+        del new_client['csrfmiddlewaretoken']
+    
+    serializer = ClientSerializer(data=new_client)
+    
+    if(serializer.is_valid()):
+      serializer.save()
+      
+      return redirect(request.path)
+    
+    print(serializer.errors)
+    return Response(status=status.HTTP_400_BAD_REQUEST) 
 
 
 # +++++++++++++++++++++++++++++++++++++  Employees  +++++++++++++++++++++++++++++++++++++
+
 @api_view(['GET'])
 def employees(request):
     all_employees = Employee.objects.all()
-    template = loader.get_template("fla_loja/employees.html")
+    # template = loader.get_template("fla_loja/employees.html")
+    template = loader.get_template("fla_loja/employees_copy.html")
     context = {
         "employees": all_employees,
     }
@@ -122,28 +126,32 @@ def delete_employee(request, id):
     
     return render(request, 'fla_loja/confirm_delete_employee.html', {'employee': employee})
 
+
+@api_view(['GET', 'POST'])
 def add_employee(request):
-    if request.method == 'POST':
-        form = EmployeeForm(request.POST, request.FILES)  # Adicione request.FILES para lidar com upload de arquivos
-        if form.is_valid():
-            photo = form.cleaned_data.get('photo')
-
-            # Verificar se a foto já existe
-            if photo and Employee.objects.filter(photo=photo).exists():
-                messages.error(request, 'Já existe um empregado com essa foto.')
-            else:
-                # Salvar o novo empregado
-                form.save()
-                messages.success(request, 'Empregado adicionado com sucesso!')
-                return redirect('fla_loja:employees')
+  
+  if request.method == 'GET':
     
-    else:
-        form = EmployeeForm()
+    template = loader.get_template("fla_loja/add_employee_copy.html")
+    context = {"a": 1,}
+    return HttpResponse(template.render(context, request))
+  
+  if request.method == 'POST':
+    new_employee = request.data.copy()
     
-    return render(request, 'fla_loja/add_employee.html', {'form': form})
-
-
-
+    # Remova o csrfmiddlewaretoken
+    if 'csrfmiddlewaretoken' in new_employee:
+        del new_employee['csrfmiddlewaretoken']
+    
+    serializer = EmployeeSerializer(data=new_employee)
+    
+    if(serializer.is_valid()):
+      serializer.save()
+      
+      return redirect(request.path)
+    
+    print(serializer.errors)
+    return Response(status=status.HTTP_400_BAD_REQUEST) 
 
 # +++++++++++++++++++++++++++++++++++++  Products  +++++++++++++++++++++++++++++++++++++
 @api_view(['GET', 'POST'])
@@ -214,33 +222,9 @@ def edit_product(request, _id):
     
     if serializer.is_valid():
       serializer.save() 
-      print("aaaaa", request.path)
       redirect(reverse(request.path))
-      # return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
     
     return Response(status=status.HTTP_400_BAD_REQUEST)
-
-#funcional
-# @api_view(['GET', 'POST'])
-# def create_product(request):
-#   if request.method == 'POST':
-#     form = ProductForm(request.POST, request.FILES)  # Adicione request.FILES para lidar com upload de arquivos
-#     if form.is_valid():
-#         image = form.cleaned_data.get('image')
-
-#         # Verificar se a foto já existe
-#         if image and Product.objects.filter(image=image).exists():
-#             messages.error(request, 'Já existe um empregado com essa foto.')
-#         else:
-#             # Salvar o novo empregado
-#             form.save()
-#             messages.success(request, 'Empregado adicionado com sucesso!')
-#             return redirect('fla_loja:index')
-
-#   else:
-#       form = ProductForm()
-  
-#   return render(request, 'fla_loja/add_product.html', {'form': form})
 
 @api_view(['GET', 'POST'])
 def create_product(request):
@@ -451,4 +435,79 @@ def add_product(request):
 #     return render(request, 'fla_loja/add_to_cart.html', {'product_id': product_id})
 
 
+#funcional
+# @api_view(['GET', 'POST'])
+# def create_product(request):
+#   if request.method == 'POST':
+#     form = ProductForm(request.POST, request.FILES)  # Adicione request.FILES para lidar com upload de arquivos
+#     if form.is_valid():
+#         image = form.cleaned_data.get('image')
 
+#         # Verificar se a foto já existe
+#         if image and Product.objects.filter(image=image).exists():
+#             messages.error(request, 'Já existe um empregado com essa foto.')
+#         else:
+#             # Salvar o novo empregado
+#             form.save()
+#             messages.success(request, 'Empregado adicionado com sucesso!')
+#             return redirect('fla_loja:index')
+
+#   else:
+#       form = ProductForm()
+  
+#   return render(request, 'fla_loja/add_product.html', {'form': form})
+
+#funcional
+# def add_employee(request):
+#     if request.method == 'POST':
+#         form = EmployeeForm(request.POST, request.FILES)  # Adicione request.FILES para lidar com upload de arquivos
+#         if form.is_valid():
+#             photo = form.cleaned_data.get('photo')
+
+#             # Verificar se a foto já existe
+#             if photo and Employee.objects.filter(photo=photo).exists():
+#                 messages.error(request, 'Já existe um empregado com essa foto.')
+#             else:
+#                 # Salvar o novo empregado
+#                 form.save()
+#                 messages.success(request, 'Empregado adicionado com sucesso!')
+#                 return redirect('fla_loja:employees')
+    
+#     else:
+#         form = EmployeeForm()
+    
+#     return render(request, 'fla_loja/add_employee.html', {'form': form})
+
+
+# @api_view(['GET', 'POST'])
+# def index(request):
+#     all_products = Product.objects.all()
+#     template = loader.get_template("fla_loja/index.html")
+#     context = {
+#         "all_products": all_products,
+#     }
+#     return HttpResponse(template.render(context, request))
+
+#funcional
+# def add_client(request):
+#     if request.method == 'POST':
+#         form = ClientForm(request.POST, request.FILES)  # Adicione request.FILES
+#         if form.is_valid():
+#             email = form.cleaned_data.get('email')
+#             cpf = form.cleaned_data.get('cpf')
+            
+#             # Verificar se o e-mail ou CPF já existe
+#             if Client.objects.filter(email=email).exists():
+#                 messages.error(request, 'Já existe um cliente com esse e-mail.')
+#             elif Client.objects.filter(cpf=cpf).exists():
+#                 messages.error(request, 'Já existe um cliente com esse CPF.')
+#             else:
+#                 # Salvar o novo cliente
+#                 form.save()
+#                 messages.success(request, 'Cliente adicionado com sucesso!')
+#                 return redirect('fla_loja:clients')
+    
+#     else:
+#         form = ClientForm()
+    
+    # return render(request, 'fla_loja/add_client.html', {'form': form})

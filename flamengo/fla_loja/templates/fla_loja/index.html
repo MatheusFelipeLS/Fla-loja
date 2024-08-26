@@ -8,7 +8,7 @@
       style="width: 500; height: 500;"
     >
   </div>
-  <div class="top--home" style="max-width: 640px; margin: 0 auto;">
+  <div class="top--home" style="max-width: 640px; margin: 0 auto; padding-bottom: 2rem;">
     <a href="{% url 'fla_loja:create_product' %}" class="button button--add" >
       <span>+</span>
     </a>
@@ -94,7 +94,7 @@
 
     </style>
   {% else %}
-    <p style="max-width: 640px; margin: 0 auto;">Nenhum produto disponível.</p>
+    <p style="max-width: 640px; margin: 0 auto; margin-top: 30px;">Nenhum produto disponível.</p>
   {% endif %}
 
 {% endblock %}
