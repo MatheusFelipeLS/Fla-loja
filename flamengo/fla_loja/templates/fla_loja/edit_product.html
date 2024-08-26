@@ -10,30 +10,30 @@
   </a>
 </div>
 
-<form action="{% url 'fla_loja:product' product.id %}" method="post" id="myForm" class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px; align-content: end;">
+<form enctype="multipart/form-data" action="{% url 'fla_loja:edit_product' product.id %}" method="POST" id="myForm" class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px; align-content: end;">
   {% csrf_token %}
   <div class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px;">
-    <input name="name" class="form-control" value="{{ product.name }}" placeholder="{{ product.name }}" id="floatingTextarea" style="resize: none;"></input>
+    <input name="name" class="form-control" value="{{ product.name }}" placeholder="Produto" id="floatingTextarea" style="resize: none;"></input>
     <label for="floatingTextarea">Produto</label>
   </div>
 
   <div class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px;">
-    <input name="description" class="form-control" value="{{ product.description }}" placeholder="{{ product.description }}" id="floatingTextarea2" style="height: 100px; resize: none;"></input>
+    <input name="description" class="form-control" value="{{ product.description }}" placeholder="Descrição" id="floatingTextarea2" style="height: 100px; resize: none;"></input>
     <label for="floatingTextarea2">Descrição</label>
   </div>
 
   <div class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px;">
-    <input name="price" class="form-control" value="{{ product.price }}" placeholder="{{ product.price }}" id="floatingTextarea3" style="resize: none;"></input>
+    <input name="price" class="form-control" value="{{ product.price }}" placeholder="Preço" id="floatingTextarea3" style="resize: none;"></input>
     <label for="floatingTextarea3">Preço</label>
   </div>
 
   <div class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px;">
-    <input name="quantity_in_stock" class="form-control" value="{{ product.quantity_in_stock }}" placeholder="{{ product.quantity_in_stock }}" id="floatingTextarea4" style="resize: none;"></input>
+    <input name="quantity_in_stock" class="form-control" value="{{ product.quantity_in_stock }}" placeholder="Quantidade em estoque" id="floatingTextarea4" style="resize: none;"></input>
     <label for="floatingTextarea4">Quantidade em estoque</label>
   </div>
 
   <div class="input-group mb-3" style="max-width: 640px; margin: 0 auto; margin-top: 40px;">
-    <input name="photo" type="file" class="form-control" id="inputGroupFile02" value="{{ product.image }}" placeholder="{{ product.image }}">
+    <input name="image" type="file" class="form-control" id="inputGroupFile02">
     <label class="input-group-text" for="inputGroupFile02">Foto do produto</label>
   </div>
 
@@ -43,35 +43,35 @@
     </button>
   </div>
 </form>
+
 <script>
   document.getElementById('myForm').addEventListener('submit', function(event) {
-      // event.preventDefault(); // Impede o envio padrão do formulário
+      event.preventDefault(); // Impede o envio padrão do formulário
 
       // Cria o objeto FormData com os dados do formulário
       var formData = new FormData(this);
 
-      // Converte o FormData para JSON (opcional, dependendo do backend)
-      var data = {};
-      formData.forEach((value, key) => {
-          data[key] = value;
-      });
-
-      console.log(JSON.stringify(data))
-      // Envia a requisição PUT usando fetch
+      // Envia a requisição POST usando fetch
       fetch("{% url 'fla_loja:edit_product' product.id %}", {
           method: 'POST',
-          headers: {
-              'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(data) // Envia os dados como JSON
+          body: formData // Envia os dados como FormData
       })
-      .then(response => response.json())
-      .then(data => {
-          console.log('Sucesso:', data);
+      .then(response => {
+          if (response.ok) {
+              // Redireciona para a página do produto
+              window.location.href = "{% url 'fla_loja:product' product.id %}";
+          } else {
+              return response.text().then(text => {
+                  console.error('Erro:', text);
+                  alert('Erro ao editar o produto. Verifique os dados e tente novamente.');
+              });
+          }
       })
       .catch((error) => {
           console.error('Erro:', error);
+          alert('Erro ao enviar a solicitação.');
       });
   });
 </script>
+
 {% endblock %}

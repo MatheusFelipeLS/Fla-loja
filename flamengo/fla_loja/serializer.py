@@ -12,6 +12,16 @@ class EmployeeSerializer(serializers.ModelSerializer):
   class Meta:
     model = Employee
     fields = '__all__'
+
+  def validate_salary(self, value):
+      if value < 0:
+          raise serializers.ValidationError("O salário não pode ser negativo.")
+      return value
+
+  def validate_number_of_sales(self, value):
+      if value < 0:
+          raise serializers.ValidationError("A quantidade de vendas não pode ser negativa.")
+      return value
     
     
 class SaleSerializer(serializers.ModelSerializer):

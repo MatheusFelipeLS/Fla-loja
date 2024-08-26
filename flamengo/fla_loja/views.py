@@ -87,7 +87,6 @@ def add_client(request):
 
 
 # +++++++++++++++++++++++++++++++++++++  Employees  +++++++++++++++++++++++++++++++++++++
-
 @api_view(['GET'])
 def employees(request):
     all_employees = Employee.objects.all()
@@ -109,13 +108,28 @@ def edit_employee(request, id):
     
     if request.method == 'POST':
         form = EmployeeForm(request.POST, instance=employee)
+
         if form.is_valid():
+            # Verificação manual para salário e número de vendas
+            salary = form.cleaned_data.get('wage', 0)
+            number_of_sales = form.cleaned_data.get('sales_count', 0)
+
+            if salary < 0:
+                messages.error(request, "Salário não pode ser negativo.")
+                return render(request, 'fla_loja/edit_employee.html', {'form': form, 'employee': employee})
+
+            if number_of_sales < 0:
+                messages.error(request, "Quantidade de vendas não pode ser negativa.")
+                return render(request, 'fla_loja/edit_employee.html', {'form': form, 'employee': employee})
+
+            # Se tudo estiver correto, salvar as alterações
             form.save()
             return redirect('fla_loja:employee_detail', id=employee.id)
     else:
         form = EmployeeForm(instance=employee)
     
     return render(request, 'fla_loja/edit_employee.html', {'form': form, 'employee': employee})
+
 
 
 def delete_employee(request, id):
@@ -130,30 +144,46 @@ def delete_employee(request, id):
 
 @api_view(['GET', 'POST'])
 def add_employee(request):
-  
-  if request.method == 'GET':
-    
-    template = loader.get_template("fla_loja/add_employee_copy.html")
-    context = {"a": 1,}
-    return HttpResponse(template.render(context, request))
-  
-  if request.method == 'POST':
-    new_employee = request.data.copy()
-    
-    # Remova o csrfmiddlewaretoken
-    if 'csrfmiddlewaretoken' in new_employee:
-        del new_employee['csrfmiddlewaretoken']
-    
-    serializer = EmployeeSerializer(data=new_employee)
-    
-    if(serializer.is_valid()):
-      serializer.save()
-      
-      return redirect('/employees/')
-    
-    print(serializer.errors)
-    return Response(status=status.HTTP_400_BAD_REQUEST) 
-  
+    if request.method == 'GET':
+        template = loader.get_template("fla_loja/add_employee_copy.html")
+        context = {"a": 1}
+        return HttpResponse(template.render(context, request))
+
+    if request.method == 'POST':
+        new_employee = request.data.copy()
+
+        # Remova o csrfmiddlewaretoken
+        if 'csrfmiddlewaretoken' in new_employee:
+            del new_employee['csrfmiddlewaretoken']
+
+        # Verificação manual para salário e número de vendas
+        salary = float(new_employee.get('wage', 0))
+        number_of_sales = int(new_employee.get('sales_count', 0))
+
+        if salary < 0:
+            messages.error(request, "Salário não pode ser negativo.")
+            return render(request, "fla_loja/add_employee_copy.html", {"form": EmployeeForm()})
+
+        if number_of_sales < 0:
+            messages.error(request, "Quantidade de vendas não pode ser negativa.")
+            return render(request, "fla_loja/add_employee_copy.html", {"form": EmployeeForm()})
+
+        # Verificação para fotos duplicadas
+        photo = new_employee.get('photo')
+        if Employee.objects.filter(photo=photo).exists():
+            messages.error(request, "Já existe um funcionário com esta foto.")
+            return render(request, "fla_loja/add_employee_copy.html", {"form": EmployeeForm()})
+
+        # Se tudo estiver correto, salvar o funcionário
+        serializer = EmployeeSerializer(data=new_employee)
+        if serializer.is_valid():
+            serializer.save()
+            return redirect(request.path)
+
+        print(serializer.errors)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
 
 # +++++++++++++++++++++++++++++++++++++  Products  +++++++++++++++++++++++++++++++++++++
 @api_view(['GET', 'POST'])
@@ -203,57 +233,92 @@ def get_product_by_name(request, _id):
     return Response(status=status.HTTP_400_BAD_REQUEST)
   
 
-@api_view(['GET', 'POST', 'PUT'])
+@api_view(['GET', 'POST'])
 def edit_product(request, _id):
-  #editando dados
-  try:
-    product = Product.objects.get(pk=_id)
-  except:
-    return Response(status=status.HTTP_404_NOT_FOUND)
-  
-  if request.method == 'GET':
-    serializer = ProductSerializer(product)
-    template = loader.get_template("fla_loja/edit_product.html")
-    context = {
-        "product": serializer.data,
-    }
-    return HttpResponse(template.render(context, request))
-  
-  if request.method == 'POST':
-    serializer = ProductSerializer(product, data=request.data)
+    try:
+        product = Product.objects.get(pk=_id)
+    except Product.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
     
-    if serializer.is_valid():
-      serializer.save() 
-      redirect(reverse(request.path))
-    
-    return Response(status=status.HTTP_400_BAD_REQUEST)
+    if request.method == 'GET':
+        serializer = ProductSerializer(product)
+        template = loader.get_template("fla_loja/edit_product.html")
+        context = {
+            "product": serializer.data,
+        }
+        return HttpResponse(template.render(context, request))
+
+    if request.method == 'POST':
+        data = request.data.copy()
+
+        # Verificação manual para preço e quantidade em estoque
+        try:
+            price = float(data.get('price', 0))
+            quantity_in_stock = int(data.get('quantity_in_stock', 0))
+
+            if price < 0:
+                messages.error(request, "O preço não pode ser negativo.")
+                return render(request, "fla_loja/edit_product.html", {"product": data})
+
+            if quantity_in_stock < 0:
+                messages.error(request, "A quantidade em estoque não pode ser negativa.")
+                return render(request, "fla_loja/edit_product.html", {"product": data})
+
+        except ValueError as e:
+            messages.error(request, f"Erro nos dados fornecidos: {e}")
+            return render(request, "fla_loja/edit_product.html", {"product": data})
+
+        # Se tudo estiver correto, atualizar o produto
+        serializer = ProductSerializer(product, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            # Redireciona para a página de detalhes do produto
+            return redirect('fla_loja:product', _id=_id)
+        
+        return render(request, "fla_loja/edit_product.html", {"product": data})
+
+
 
 
 @api_view(['GET', 'POST'])
 def create_product(request):
-  
-  if request.method == 'GET':
-    
-    template = loader.get_template("fla_loja/create_product_copy.html")
-    context = {"a": 1,}
-    return HttpResponse(template.render(context, request))
-  
-  if request.method == 'POST':
-    new_product = request.data.copy()
-    
-    # Remova o csrfmiddlewaretoken
-    if 'csrfmiddlewaretoken' in new_product:
-        del new_product['csrfmiddlewaretoken']
-    
-    serializer = ProductSerializer(data=new_product)
-    
-    if(serializer.is_valid()):
-      serializer.save()
-      
-      return redirect('/')
-    
-    print(serializer.errors)
-    return Response(status=status.HTTP_400_BAD_REQUEST) 
+    if request.method == 'GET':
+        template = loader.get_template("fla_loja/create_product_copy.html")
+        context = {"a": 1}
+        return HttpResponse(template.render(context, request))
+
+    if request.method == 'POST':
+        new_product = request.data.copy()
+
+        # Remova o csrfmiddlewaretoken
+        if 'csrfmiddlewaretoken' in new_product:
+            del new_product['csrfmiddlewaretoken']
+
+        # Verificação manual para preço e quantidade em estoque
+        try:
+            price = float(new_product.get('price', 0))
+            quantity_in_stock = int(new_product.get('quantity_in_stock', 0))
+
+            if price < 0:
+                messages.error(request, "O preço não pode ser negativo.")
+                return render(request, "fla_loja/create_product_copy.html", {"form": new_product})
+
+            if quantity_in_stock < 0:
+                messages.error(request, "A quantidade em estoque não pode ser negativa.")
+                return render(request, "fla_loja/create_product_copy.html", {"form": new_product})
+
+        except ValueError as e:
+            messages.error(request, f"Erro nos dados fornecidos: {e}")
+            return render(request, "fla_loja/create_product_copy.html", {"form": new_product})
+
+        # Se tudo estiver correto, salvar o produto
+        serializer = ProductSerializer(data=new_product)
+        if serializer.is_valid():
+            serializer.save()
+            return redirect('/')
+        
+        print(serializer.errors)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
   
   
 @api_view(['GET', 'POST', 'DELETE'])
@@ -369,9 +434,14 @@ def sale(request, product_id):
         product.quantity_in_stock -= quantity
         product.save()
 
+        # Increment the employee's number of sales
+        employee.sales_count += 1
+        employee.save()
+
         return redirect('fla_loja:sales')
     
     return render(request, 'fla_loja/sale.html', {'product': product})
+
 
 
 def sale_detail(request, sale_id):
