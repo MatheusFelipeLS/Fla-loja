@@ -12,6 +12,16 @@
 
 <form enctype="multipart/form-data" action="{% url 'fla_loja:create_product' %}" method="POST" id="myForm" class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px; align-content: end;">
   {% csrf_token %}
+
+  <!-- Exibir mensagens de erro, se houver -->
+  {% if messages %}
+    <div class="alert alert-danger" style="margin-top: 20px;">
+      {% for message in messages %}
+        <p>{{ message }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+
   <div class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px;">
     <input name="name" class="form-control" id="floatingTextarea" style="resize: none;"></input>
     <label for="floatingTextarea">Produto</label>
