@@ -1,0 +1,43 @@
+{% extends 'fla_loja/base.html' %}
+
+{% block content %}
+<main class="main main--stock" style="padding: 20px;">
+
+  <div class="table-responsive">
+    <table class="table table-bordered table-striped">
+      <thead class="table-dark" style="background-color: black; color: red;">
+        <tr>
+          <th scope="col">Foto do Produto</th>
+          <th scope="col">Nome do Produto</th>
+          <th scope="col">Quantidade Disponível</th>
+          <th scope="col">Preço Total</th>
+          <th scope="col">Ação</th> <!-- Nova coluna para o botão -->
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in stock_data %}
+        <tr>
+          <td>
+            {% if product.image %}
+              <img src="{{ product.image }}" alt="{{ product.name }}" style="max-width: 100px;">
+            {% else %}
+              <span>N/A</span>
+            {% endif %}
+          </td>
+          <td>{{ product.name }}</td>
+          <td>{{ product.quantity }}</td>
+          <td>R${{ product.total_price }}</td>
+          <td>
+            <a href="{% url 'fla_loja:product' product.id %}" class="btn btn-primary">Acessar</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5">Nenhum produto disponível.</td> <!-- Atualize a coluna colspan para 5 -->
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</main>
+{% endblock %}

@@ -24,8 +24,8 @@ class Product(models.Model):
   
   
 class Sale(models.Model):
-  id_client = models.ForeignKey(Client, default='', on_delete=models.DO_NOTHING)
-  id_product = models.ForeignKey(Product, on_delete=models.DO_NOTHING)
-  id_employee = models.ForeignKey(Employee, on_delete=models.DO_NOTHING)
+  id_client = models.ForeignKey(Client, default='', on_delete=models.SET_NULL, null=True)
+  id_product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
+  id_employee = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True)
   data = models.DateField("Date purchased")
   quantity = models.IntegerField(default=0)
