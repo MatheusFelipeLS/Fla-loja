@@ -6,7 +6,6 @@ class Client(models.Model):
   cpf = models.CharField(max_length=14, default='')
   phone = models.CharField(max_length=15, default='')
   email = models.EmailField(default='')
-  photo = models.ImageField(default='',upload_to=None, height_field=None, width_field=None, max_length=100)
   
   
 class Employee(models.Model):
@@ -24,14 +23,9 @@ class Product(models.Model):
   image = models.ImageField(default='', upload_to='flamengo/fla_loja/static/fla_loja/products', height_field=None, width_field=None, max_length=100)
   
   
-class Shopping(models.Model):
-  id_client = models.ForeignKey(Client, on_delete=models.CASCADE)
-  total_value = models.FloatField(default=0.0)
-  
-
 class Sale(models.Model):
-  id_shopping = models.ForeignKey(Shopping, on_delete=models.CASCADE)
-  id_product = models.ForeignKey(Product, on_delete=models.CASCADE)
-  id_employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
+  id_client = models.ForeignKey(Client, default='', on_delete=models.DO_NOTHING)
+  id_product = models.ForeignKey(Product, on_delete=models.DO_NOTHING)
+  id_employee = models.ForeignKey(Employee, on_delete=models.DO_NOTHING)
   data = models.DateField("Date purchased")
   quantity = models.IntegerField(default=0)

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Client, Employee, Sale, Shopping, Product
+from .models import Client, Employee, Sale, Product
 
 
 class ClientSerializer(serializers.ModelSerializer):
@@ -20,10 +20,10 @@ class SaleSerializer(serializers.ModelSerializer):
     fields = '__all__'
     
     
-class ShoppingSerializer(serializers.ModelSerializer):
-  class Meta:
-    model = Shopping
-    fields = '__all__'
+# class ShoppingSerializer(serializers.ModelSerializer):
+#   class Meta:
+#     model = Shopping
+#     fields = '__all__'
     
 
 # class Base64ImageField(serializers.ImageField):
