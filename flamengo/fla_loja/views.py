@@ -353,161 +353,133 @@ def add_product(request):
 
 
 
-# +++++++++++++++++++++++++++++++++++++  Shopping  +++++++++++++++++++++++++++++++++++++
-# def shopping_cart(request):
-#     shoppings = Shopping.objects.all()
+# +++++++++++++++++++++++++++++++++++++  Sales  +++++++++++++++++++++++++++++++++++++
+def sales(request):
+    # Obter todas as vendas
+    sales = Sale.objects.select_related('id_client', 'id_product', 'id_employee').all()
     
-#     cart_data = []
-#     for shopping in shoppings:
-#         client = shopping.id_client
-#         total_products = Sale.objects.filter(id_shopping=shopping).aggregate(total=models.Sum('quantity'))['total'] or 0
-#         total_value = shopping.total_value
-#         cart_data.append({
-#             'client_name': client.name,
-#             'total_products': total_products,
-#             'total_value': total_value,
-#             'shopping_id': shopping.id
-#         })
-
-#     context = {
-#         'cart_data': cart_data
-#     }
+    # Preparar os dados para a tabela
+    sales_data = []
+    for sale in sales:
+        sales_data.append({
+            'id': sale.id,  # Inclua o ID da venda aqui
+            'client_name': sale.id_client.name,
+            'product_name': sale.id_product.name,
+            'quantity': sale.quantity,
+            'total_price': sale.quantity * sale.id_product.price,
+            'employee_name': sale.id_employee.name,  # Nome do vendedor
+            'date': sale.data.strftime('%Y-%m-%d')  # Data da compra no formato YYYY-MM-DD
+        })
     
-#     return render(request, 'fla_loja/shopping_cart.html', context)
-
-
-# def shopping_detail(request, id):
-#     shopping = get_object_or_404(Shopping, id=id)
+    context = {
+        'sales_data': sales_data
+    }
     
-#     sales = Sale.objects.filter(id_shopping=shopping)
+    return render(request, 'fla_loja/sales.html', context)
 
-#     products_data = []
-#     for sale in sales:
-#         product = sale.id_product
-#         employee = sale.id_employee
-#         products_data.append({
-#             'product_name': product.name,
-#             'quantity': sale.quantity,
-#             'employee_name': employee.name,
-#             'date_purchased': sale.data,
-#             'product_price': product.price,
-#             'total_price': sale.quantity * product.price
-#         })
 
-#     context = {
-#         'shopping': shopping,
-#         'products_data': products_data,
-#         'client': shopping.id_client,
-#         'total_value': shopping.total_value
-#     }
+def sale(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+
+    if request.method == "POST":
+        client_id = request.POST.get("client_id")
+        employee_id = request.POST.get("employee_id")
+        date_purchased = request.POST.get("date_purchased")
+        quantity = int(request.POST.get("quantity"))
+
+        # Validate the client and employee IDs
+        client = Client.objects.filter(id=client_id).first()
+        employee = Employee.objects.filter(id=employee_id).first()
+        
+        if not client or not employee:
+            messages.error(request, "Cliente ou Vendedor inválido.")
+            return render(request, 'fla_loja/sale.html', {'product': product})
+        
+        # Check if quantity is available in stock
+        if quantity > product.quantity_in_stock:
+            messages.error(request, "Quantidade solicitada excede o estoque disponível.")
+            return render(request, 'fla_loja/sale.html', {'product': product})
+        
+        try:
+            # Parse the date
+            parsed_date = parse_datetime(date_purchased)
+            if parsed_date is None:
+                raise ValueError("Data inválida")
+        except ValueError as e:
+            messages.error(request, f"Erro na data: {e}")
+            return render(request, 'fla_loja/sale.html', {'product': product})
+        
+        # Create the sale
+        Sale.objects.create(
+            id_client=client,
+            id_product=product,
+            id_employee=employee,
+            data=parsed_date,
+            quantity=quantity
+        )
+
+        # Update the product's stock
+        product.quantity_in_stock -= quantity
+        product.save()
+
+        return redirect('fla_loja:sales')
     
-#     return render(request, 'fla_loja/shopping_detail.html', context)
+    return render(request, 'fla_loja/sale.html', {'product': product})
 
 
-# def add_to_cart(request, product_id):
-#     if request.method == 'POST':
-#         client_id = request.POST.get('client_id')
-#         employee_id = request.POST.get('employee_id')
-#         quantity = request.POST.get('quantity')
-#         date_purchased_str = request.POST.get('date_purchased')
-
-#         if not date_purchased_str:
-#             return HttpResponseBadRequest("A data e hora são obrigatórios.")
-
-#         # Converter a data do formato string para datetime
-#         date_purchased = parse_datetime(date_purchased_str)
-#         if date_purchased is None:
-#             return HttpResponseBadRequest("Formato de data e hora inválido. Use o formato YYYY-MM-DDTHH:MM.")
-
-#         # Obter cliente, funcionário e produto com tratamento de erro
-#         client = get_object_or_404(Client, id=client_id)
-#         employee = get_object_or_404(Employee, id=employee_id)
-#         product = get_object_or_404(Product, id=product_id)
-
-#         # Criar ou atualizar a compra
-#         shopping = Shopping.objects.create(id_client=client)
-#         Sale.objects.create(id_shopping=shopping, id_product=product, id_employee=employee, quantity=quantity, data=date_purchased)
-
-#         # Redirecionar para a página principal após a adição
-#         messages.success(request, 'Produto adicionado ao carrinho com sucesso!')
-#         return redirect('/')
-
-#     return render(request, 'fla_loja/add_to_cart.html', {'product_id': product_id})
-
-
-#funcional
-# @api_view(['GET', 'POST'])
-# def create_product(request):
-#   if request.method == 'POST':
-#     form = ProductForm(request.POST, request.FILES)  # Adicione request.FILES para lidar com upload de arquivos
-#     if form.is_valid():
-#         image = form.cleaned_data.get('image')
-
-#         # Verificar se a foto já existe
-#         if image and Product.objects.filter(image=image).exists():
-#             messages.error(request, 'Já existe um empregado com essa foto.')
-#         else:
-#             # Salvar o novo empregado
-#             form.save()
-#             messages.success(request, 'Empregado adicionado com sucesso!')
-#             return redirect('fla_loja:index')
-
-#   else:
-#       form = ProductForm()
-  
-#   return render(request, 'fla_loja/add_product.html', {'form': form})
-
-#funcional
-# def add_employee(request):
-#     if request.method == 'POST':
-#         form = EmployeeForm(request.POST, request.FILES)  # Adicione request.FILES para lidar com upload de arquivos
-#         if form.is_valid():
-#             photo = form.cleaned_data.get('photo')
-
-#             # Verificar se a foto já existe
-#             if photo and Employee.objects.filter(photo=photo).exists():
-#                 messages.error(request, 'Já existe um empregado com essa foto.')
-#             else:
-#                 # Salvar o novo empregado
-#                 form.save()
-#                 messages.success(request, 'Empregado adicionado com sucesso!')
-#                 return redirect('fla_loja:employees')
+def sale_detail(request, sale_id):
+    # Obter a venda com o ID fornecido
+    sale = get_object_or_404(Sale, id=sale_id)
     
-#     else:
-#         form = EmployeeForm()
+    # Preparar os dados para o contexto
+    context = {
+        'client_name': sale.id_client.name,
+        'employee_name': sale.id_employee.name,
+        'product_image': sale.id_product.image.url,  # Assegure-se de que o caminho da imagem está correto
+        'product_name': sale.id_product.name,
+        'product_description': sale.id_product.description,
+        'quantity': sale.quantity,
+        'total_price': sale.quantity * sale.id_product.price,
+    }
     
-#     return render(request, 'fla_loja/add_employee.html', {'form': form})
+    return render(request, 'fla_loja/sale_detail.html', context)
 
 
-# @api_view(['GET', 'POST'])
-# def index(request):
-#     all_products = Product.objects.all()
-#     template = loader.get_template("fla_loja/index.html")
-#     context = {
-#         "all_products": all_products,
-#     }
-#     return HttpResponse(template.render(context, request))
+def delete_sale(request, sale_id):
+    if request.method == "POST":
+        sale = get_object_or_404(Sale, id=sale_id)
+        sale.delete()
+        # Redirecionar de volta para a página de vendas após a exclusão
+        return redirect('sales')
+    # Opcional: Pode retornar um erro se a requisição não for POST
+    return redirect('sales')
 
-#funcional
-# def add_client(request):
-#     if request.method == 'POST':
-#         form = ClientForm(request.POST, request.FILES)  # Adicione request.FILES
-#         if form.is_valid():
-#             email = form.cleaned_data.get('email')
-#             cpf = form.cleaned_data.get('cpf')
-            
-#             # Verificar se o e-mail ou CPF já existe
-#             if Client.objects.filter(email=email).exists():
-#                 messages.error(request, 'Já existe um cliente com esse e-mail.')
-#             elif Client.objects.filter(cpf=cpf).exists():
-#                 messages.error(request, 'Já existe um cliente com esse CPF.')
-#             else:
-#                 # Salvar o novo cliente
-#                 form.save()
-#                 messages.success(request, 'Cliente adicionado com sucesso!')
-#                 return redirect('fla_loja:clients')
+
+
+
+# +++++++++++++++++++++++++++++++++++++  Estoque  +++++++++++++++++++++++++++++++++++++
+# views.py
+from django.shortcuts import render
+from .models import Product
+
+def stock(request):
+    # Obter todos os produtos
+    products = Product.objects.all()
     
-#     else:
-#         form = ClientForm()
+    # Preparar os dados para a tabela
+    stock_data = []
+    for product in products:
+        total_price = product.price * product.quantity_in_stock
+        stock_data.append({
+            'id': product.id,  # Inclua o ID do produto aqui
+            'image': product.image.url if product.image else None,
+            'name': product.name,
+            'quantity': product.quantity_in_stock,
+            'total_price': total_price,
+        })
     
-    # return render(request, 'fla_loja/add_client.html', {'form': form})
+    context = {
+        'stock_data': stock_data
+    }
+    
+    return render(request, 'fla_loja/stock.html', context)

@@ -34,10 +34,15 @@ urlpatterns = [
     path('add_employee/', views.add_employee, name='add_employee'),
 
 
-    # +++++++++++++++++++++++++++  Carrinho  +++++++++++++++++++++++++++
-    # path('shopping/', views.shopping_cart, name='shopping_cart'),
-    # path('shopping/<int:id>/', views.shopping_detail, name='shopping_detail'),
-    # path('add_to_cart/<int:product_id>/', views.add_to_cart, name='add_to_cart'),
+    # +++++++++++++++++++++++++++  Vendas  +++++++++++++++++++++++++++
+    path('sales/', views.sales, name='sales'),
+    path('sale/<int:product_id>/', views.sale, name='sale'),
+    path('sale_detail/<int:sale_id>/', views.sale_detail, name='sale_detail'),
+    path('delete_sale/<int:sale_id>/', views.delete_sale, name='delete_sale'),
+
+
+    # +++++++++++++++++++++++++++  Estoque  +++++++++++++++++++++++++++
+    path('stock/', views.stock, name='stock'),
     
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

@@ -1,0 +1,39 @@
+{% extends 'fla_loja/base.html' %}
+
+{% block content %}
+<main class="main main--sales" style="padding: 20px;">
+
+  <div class="table-responsive">
+    <table class="table table-bordered table-striped">
+      <thead class="table-dark" style="background-color: black; color: red;">
+        <tr>
+          <th scope="col">ID da Venda</th> <!-- Coluna para o ID da venda -->
+          <th scope="col">Nome do Cliente</th>
+          <th scope="col">Nome do Produto</th>
+          <th scope="col">Quantidade</th>
+          <th scope="col">Preço Total</th>
+          <th scope="col">Nome do Vendedor</th> <!-- Nova coluna para o nome do vendedor -->
+          <th scope="col">Data da Compra</th> <!-- Nova coluna para a data da compra -->
+        </tr>
+      </thead>
+      <tbody>
+        {% for sale in sales_data %}
+        <tr>
+          <td>{{ sale.id }}</td> <!-- Exibe o ID da venda -->
+          <td>{{ sale.client_name }}</td>
+          <td>{{ sale.product_name }}</td>
+          <td>{{ sale.quantity }}</td>
+          <td>R${{ sale.total_price }}</td>
+          <td>{{ sale.employee_name }}</td> <!-- Exibe o nome do vendedor -->
+          <td>{{ sale.date }}</td> <!-- Exibe a data da compra -->
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7">Nenhuma venda disponível.</td> <!-- Atualize a coluna colspan para 7 -->
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</main>
+{% endblock %}
