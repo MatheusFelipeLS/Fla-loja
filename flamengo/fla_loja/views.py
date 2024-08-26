@@ -425,9 +425,14 @@ def sale(request, product_id):
         product.quantity_in_stock -= quantity
         product.save()
 
+        # Increment the employee's number of sales
+        employee.sales_count += 1
+        employee.save()
+
         return redirect('fla_loja:sales')
     
     return render(request, 'fla_loja/sale.html', {'product': product})
+
 
 
 def sale_detail(request, sale_id):
