@@ -7,6 +7,17 @@
   <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
     {{ form.as_p }}
+    {% if errors %}
+      <div class="alert alert-danger">
+        <ul>
+          {% for field, error_messages in errors.items %}
+            {% for message in error_messages %}
+              <li>{{ message }}</li>
+            {% endfor %}
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
     <button type="submit" class="btn btn-success">Adicionar Vendedor</button>
     <a href="{% url 'fla_loja:employees' %}" class="btn btn-secondary" style="margin-left: 10px;">Cancelar</a>
   </form>

@@ -86,7 +86,6 @@ def add_client(request):
 
 
 # +++++++++++++++++++++++++++++++++++++  Employees  +++++++++++++++++++++++++++++++++++++
-
 @api_view(['GET'])
 def employees(request):
     all_employees = Employee.objects.all()
@@ -108,13 +107,28 @@ def edit_employee(request, id):
     
     if request.method == 'POST':
         form = EmployeeForm(request.POST, instance=employee)
+
         if form.is_valid():
+            # Verificação manual para salário e número de vendas
+            salary = form.cleaned_data.get('wage', 0)
+            number_of_sales = form.cleaned_data.get('sales_count', 0)
+
+            if salary < 0:
+                messages.error(request, "Salário não pode ser negativo.")
+                return render(request, 'fla_loja/edit_employee.html', {'form': form, 'employee': employee})
+
+            if number_of_sales < 0:
+                messages.error(request, "Quantidade de vendas não pode ser negativa.")
+                return render(request, 'fla_loja/edit_employee.html', {'form': form, 'employee': employee})
+
+            # Se tudo estiver correto, salvar as alterações
             form.save()
             return redirect('fla_loja:employee_detail', id=employee.id)
     else:
         form = EmployeeForm(instance=employee)
     
     return render(request, 'fla_loja/edit_employee.html', {'form': form, 'employee': employee})
+
 
 
 def delete_employee(request, id):
@@ -129,29 +143,46 @@ def delete_employee(request, id):
 
 @api_view(['GET', 'POST'])
 def add_employee(request):
-  
-  if request.method == 'GET':
-    
-    template = loader.get_template("fla_loja/add_employee_copy.html")
-    context = {"a": 1,}
-    return HttpResponse(template.render(context, request))
-  
-  if request.method == 'POST':
-    new_employee = request.data.copy()
-    
-    # Remova o csrfmiddlewaretoken
-    if 'csrfmiddlewaretoken' in new_employee:
-        del new_employee['csrfmiddlewaretoken']
-    
-    serializer = EmployeeSerializer(data=new_employee)
-    
-    if(serializer.is_valid()):
-      serializer.save()
-      
-      return redirect(request.path)
-    
-    print(serializer.errors)
-    return Response(status=status.HTTP_400_BAD_REQUEST) 
+    if request.method == 'GET':
+        template = loader.get_template("fla_loja/add_employee_copy.html")
+        context = {"a": 1}
+        return HttpResponse(template.render(context, request))
+
+    if request.method == 'POST':
+        new_employee = request.data.copy()
+
+        # Remova o csrfmiddlewaretoken
+        if 'csrfmiddlewaretoken' in new_employee:
+            del new_employee['csrfmiddlewaretoken']
+
+        # Verificação manual para salário e número de vendas
+        salary = float(new_employee.get('wage', 0))
+        number_of_sales = int(new_employee.get('sales_count', 0))
+
+        if salary < 0:
+            messages.error(request, "Salário não pode ser negativo.")
+            return render(request, "fla_loja/add_employee_copy.html", {"form": EmployeeForm()})
+
+        if number_of_sales < 0:
+            messages.error(request, "Quantidade de vendas não pode ser negativa.")
+            return render(request, "fla_loja/add_employee_copy.html", {"form": EmployeeForm()})
+
+        # Verificação para fotos duplicadas
+        photo = new_employee.get('photo')
+        if Employee.objects.filter(photo=photo).exists():
+            messages.error(request, "Já existe um funcionário com esta foto.")
+            return render(request, "fla_loja/add_employee_copy.html", {"form": EmployeeForm()})
+
+        # Se tudo estiver correto, salvar o funcionário
+        serializer = EmployeeSerializer(data=new_employee)
+        if serializer.is_valid():
+            serializer.save()
+            return redirect(request.path)
+
+        print(serializer.errors)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
 
 # +++++++++++++++++++++++++++++++++++++  Products  +++++++++++++++++++++++++++++++++++++
 @api_view(['GET', 'POST'])
@@ -466,10 +497,6 @@ def delete_sale(request, sale_id):
 
 
 # +++++++++++++++++++++++++++++++++++++  Estoque  +++++++++++++++++++++++++++++++++++++
-# views.py
-from django.shortcuts import render
-from .models import Product
-
 def stock(request):
     # Obter todos os produtos
     products = Product.objects.all()

@@ -3,7 +3,7 @@
 {% block content %}
 <main class="main main--edit-employee" style="padding: 20px;">
   <div style="display: flex; flex-direction: column; margin-top: 30px;">
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
       {{ form.as_p }}
       <button type="submit" class="btn btn-primary">Salvar alterações</button>
@@ -16,5 +16,14 @@
         Cancelar
     </a>
   </div>
+
+  <!-- Exibir mensagens de erro, se houver -->
+  {% if messages %}
+    <div class="alert alert-danger" style="margin-top: 20px;">
+      {% for message in messages %}
+        <p>{{ message }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
 </main>
 {% endblock %}
