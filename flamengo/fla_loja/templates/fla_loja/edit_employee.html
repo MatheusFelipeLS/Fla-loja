@@ -2,7 +2,7 @@
 
 {% block content %}
 <main class="main main--edit-employee" style="padding: 20px;">
-  <div style="display: flex; flex-direction: column;"></div>
+  <div style="display: flex; flex-direction: column; margin-top: 30px;">
     <form method="post">
       {% csrf_token %}
       {{ form.as_p }}
@@ -11,10 +11,10 @@
     <a 
         href="{% url 'fla_loja:employees'  %}" 
         class="btn btn-secondary"
-        style="width: 100px; height: 50px;"
+        style="width: 100px; height: 50px; margin-top: 30px; margin-bottom: 20px;"
       >
         Cancelar
     </a>
-  <div/>
+  </div>
 </main>
 {% endblock %}

@@ -242,12 +242,13 @@ def create_product(request):
     if 'csrfmiddlewaretoken' in new_product:
         del new_product['csrfmiddlewaretoken']
     
+    print("new_product: ", new_product)
     serializer = ProductSerializer(data=new_product)
     
     if(serializer.is_valid()):
       serializer.save()
       
-      return redirect(request.path)
+      return redirect('/')
     
     print(serializer.errors)
     return Response(status=status.HTTP_400_BAD_REQUEST) 
@@ -269,7 +270,8 @@ def delete_product(request, _id):
         "all_products": all_products,
     }
     
-    return HttpResponseRedirect(template.render(context, request), status=status.HTTP_202_ACCEPTED)
+    # return HttpResponse(template.render(context, request), status=status.HTTP_202_ACCEPTED)
+    return redirect('/')
 
 
 @api_view(['GET', 'POST', 'PUT', 'DELETE'])
@@ -326,6 +328,7 @@ def product_manager(request):
       return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
     
     return Response(status=status.HTTP_400_BAD_REQUEST) 
+ 
   
   #deletando dados
   if request.method == 'DELETE':
