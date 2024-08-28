@@ -3,14 +3,14 @@
 {% block content %}
 
 <div style="max-width: 640px; margin: 0 auto">
-  <a href="{% url 'fla_loja:employees' %}" style="max-width: 640px; align-items: center; text-decoration: none; color: black;">
+  <a href="{% url 'fla_loja:clients' %}" style="max-width: 640px; align-items: center; text-decoration: none; color: black;">
     <svg style="margin-top: 50px; margin-bottom: 20px;" xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16">
       <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/>
     </svg>
   </a>
 </div>
 
-<form enctype="multipart/form-data" action="{% url 'fla_loja:add_employee' %}" method="POST" id="myForm" class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px; align-content: end;">
+<form enctype="multipart/form-data" action="{% url 'fla_loja:create_client' %}" method="POST" id="myForm" class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px; align-content: end;">
   {% csrf_token %}
   <div class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px;">
     <input name="name" class="form-control" id="floatingTextarea" style="resize: none;"></input>
@@ -18,18 +18,23 @@
   </div>
 
   <div class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px;">
-    <input name="wage" class="form-control" id="floatingTextarea3" style="resize: none;"></input>
-    <label for="floatingTextarea3">Salário</label>
+    <input name="cpf" class="form-control" id="floatingTextarea3" style="resize: none;"></input>
+    <label for="floatingTextarea3">CPF</label>
   </div>
 
   <div class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px;">
-    <input name="sales_count" class="form-control" id="floatingTextarea3" style="resize: none;"></input>
-    <label for="floatingTextarea3">Quantidade de Vendas</label>
+    <input name="email" class="form-control" id="floatingTextarea3" style="resize: none;"></input>
+    <label for="floatingTextarea3">Email</label>
+  </div>
+  
+  <div class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px;">
+    <input name="phone" class="form-control" id="floatingTextarea3" style="resize: none;"></input>
+    <label for="floatingTextarea3">Telefone</label>
   </div>
 
-  <div class="input-group mb-3" style="max-width: 640px; margin: 0 auto; margin-top: 40px;">
-    <input name="photo" type="file" class="form-control" id="inputGroupFile02">
-    <label class="input-group-text" for="inputGroupFile02">Foto do produto</label>
+  <div class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px;">
+    <input name="address" class="form-control" id="floatingTextarea3" style="resize: none;"></input>
+    <label for="floatingTextarea3">Endereço</label>
   </div>
 
   <div class="col-12">

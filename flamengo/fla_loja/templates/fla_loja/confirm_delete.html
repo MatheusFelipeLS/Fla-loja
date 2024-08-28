@@ -1,0 +1,22 @@
+{% extends 'fla_loja/base.html' %}
+
+{% block content %}
+<main class="main main--delete" style="padding: 20px;">
+  <div style="display: flex; flex-direction: column; margin-top: 30px; margin-bottom: 100px; align-items: center;">
+    {% if employee %}
+      <h3 style="margin-top: 120px;">Você tem certeza que deseja excluir o {{ type }} {{ employee.name }}?</h3>
+    {% elif client %}
+    <h3 style="margin-top: 120px;">Você tem certeza que deseja excluir o {{ type }} {{ client.name }}?</h3>
+    {% endif %}
+    <form method="post" style="margin-top: 50px;">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Deletar</button>
+      {% if is_employee %}
+        <a href="{% url 'fla_loja:employee_detail' employee.id %}" class="btn btn-secondary">Cancelar</a>
+      {% else %}
+        <a href="{% url 'fla_loja:client_detail' client.id %}" class="btn btn-secondary">Cancelar</a>
+      {% endif %}
+    </form>
+  <div/>
+</main>
+{% endblock %}

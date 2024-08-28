@@ -1,11 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404, redirect
-from django.http import HttpResponse, JsonResponse, HttpResponseRedirect, HttpResponseBadRequest
+from django.http import HttpResponse
 from django.template import loader
-from django.urls import reverse
 from django.contrib import messages
 from django.utils.dateparse import parse_datetime
 
-from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -14,27 +12,25 @@ from .models import *
 from .serializer import *
 from .forms import *
 
-import shutil
-from datetime import date
-
 
 # +++++++++++++++++++++++++++++++++++++  Clients  +++++++++++++++++++++++++++++++++++++
 @api_view(['GET'])
 def clients(request):
     all_clients = Client.objects.all()
-    # template = loader.get_template("fla_loja/clients.html")
-    template = loader.get_template("fla_loja/clients_copy.html")
+    template = loader.get_template("fla_loja/clients.html")
     context = {
         "clients": all_clients,
     }
     return HttpResponse(template.render(context, request))
 
 
+@api_view(['GET'])
 def client_detail(request, id):
     client = get_object_or_404(Client, id=id)
     return render(request, 'fla_loja/client_detail.html', {'client': client})
 
 
+@api_view(['GET', 'POST'])
 def edit_client(request, id):
     client = get_object_or_404(Client, id=id)
     
@@ -49,6 +45,7 @@ def edit_client(request, id):
     return render(request, 'fla_loja/edit_client.html', {'form': form, 'client': client})
 
 
+@api_view(['GET', 'POST'])
 def delete_client(request, id):
     client = get_object_or_404(Client, id=id)
     
@@ -56,17 +53,21 @@ def delete_client(request, id):
         client.delete()
         return redirect('fla_loja:clients')
     
-    return render(request, 'fla_loja/confirm_delete_client.html', {'client': client})
+    return render(
+        request, 
+        'fla_loja/confirm_delete.html', 
+        {
+            'type': 'Cliente',
+            'client': client,
+            'is_employee': 0,
+        }
+    )
 
 
 @api_view(['GET', 'POST'])
-def add_client(request):
-  
+def create_client(request):
   if request.method == 'GET':
-    
-    template = loader.get_template("fla_loja/add_client_copy.html")
-    context = {"a": 1,}
-    return HttpResponse(template.render(context, request))
+    return render(request, "fla_loja/create_client.html")
   
   if request.method == 'POST':
     new_client = request.data.copy()
@@ -90,19 +91,20 @@ def add_client(request):
 @api_view(['GET'])
 def employees(request):
     all_employees = Employee.objects.all()
-    # template = loader.get_template("fla_loja/employees.html")
-    template = loader.get_template("fla_loja/employees_copy.html")
+    template = loader.get_template("fla_loja/employees.html")
     context = {
         "employees": all_employees,
     }
     return HttpResponse(template.render(context, request))
 
 
+@api_view(['GET'])
 def employee_detail(request, id):
     employee = get_object_or_404(Employee, id=id)
     return render(request, 'fla_loja/employee_detail.html', {'employee': employee})
 
 
+@api_view(['GET', 'POST'])
 def edit_employee(request, id):
     employee = get_object_or_404(Employee, id=id)
     
@@ -114,14 +116,19 @@ def edit_employee(request, id):
             salary = form.cleaned_data.get('wage', 0)
             number_of_sales = form.cleaned_data.get('sales_count', 0)
 
+            errors = False
             if salary < 0:
                 messages.error(request, "Salário não pode ser negativo.")
-                return render(request, 'fla_loja/edit_employee.html', {'form': form, 'employee': employee})
+                errors = False
 
             if number_of_sales < 0:
                 messages.error(request, "Quantidade de vendas não pode ser negativa.")
-                return render(request, 'fla_loja/edit_employee.html', {'form': form, 'employee': employee})
+                errors = False
 
+            if errors:
+                return render(request, 'fla_loja/edit_employee.html', {'form': form, 'employee': employee})
+            
+            
             # Se tudo estiver correto, salvar as alterações
             form.save()
             return redirect('fla_loja:employee_detail', id=employee.id)
@@ -131,7 +138,7 @@ def edit_employee(request, id):
     return render(request, 'fla_loja/edit_employee.html', {'form': form, 'employee': employee})
 
 
-
+@api_view(['GET', 'POST'])
 def delete_employee(request, id):
     employee = get_object_or_404(Employee, id=id)
     
@@ -139,15 +146,22 @@ def delete_employee(request, id):
         employee.delete()
         return redirect('fla_loja:employees')
     
-    return render(request, 'fla_loja/confirm_delete_employee.html', {'employee': employee})
+    return render(
+        request, 
+        'fla_loja/confirm_delete.html', 
+        {
+            'type': 'Vendedor',
+            'employee': employee,
+            'is_employee': 1
+            
+        }
+    )
 
 
 @api_view(['GET', 'POST'])
-def add_employee(request):
+def create_employee(request):
     if request.method == 'GET':
-        template = loader.get_template("fla_loja/add_employee_copy.html")
-        context = {"a": 1}
-        return HttpResponse(template.render(context, request))
+        return render(request, "fla_loja/create_employee.html")
 
     if request.method == 'POST':
         new_employee = request.data.copy()
@@ -160,29 +174,33 @@ def add_employee(request):
         salary = float(new_employee.get('wage', 0))
         number_of_sales = int(new_employee.get('sales_count', 0))
 
+        errors = False
         if salary < 0:
             messages.error(request, "Salário não pode ser negativo.")
-            return render(request, "fla_loja/add_employee_copy.html", {"form": EmployeeForm()})
+            errors = True
 
         if number_of_sales < 0:
             messages.error(request, "Quantidade de vendas não pode ser negativa.")
-            return render(request, "fla_loja/add_employee_copy.html", {"form": EmployeeForm()})
+            errors = True
 
         # Verificação para fotos duplicadas
         photo = new_employee.get('photo')
         if Employee.objects.filter(photo=photo).exists():
             messages.error(request, "Já existe um funcionário com esta foto.")
-            return render(request, "fla_loja/add_employee_copy.html", {"form": EmployeeForm()})
+            errors = True
 
+        if errors:
+            return render(request, "fla_loja/create_employee.html", {"form": EmployeeForm()})
+        
+        
         # Se tudo estiver correto, salvar o funcionário
         serializer = EmployeeSerializer(data=new_employee)
         if serializer.is_valid():
             serializer.save()
-            return redirect(request.path)
+            return redirect('/employees/')
 
         print(serializer.errors)
         return Response(status=status.HTTP_400_BAD_REQUEST)
-
 
 
 # +++++++++++++++++++++++++++++++++++++  Products  +++++++++++++++++++++++++++++++++++++
@@ -196,8 +214,8 @@ def index(request):
     return HttpResponse(template.render(context, request))
 
 
-@api_view(['GET', 'POST', 'PUT'])
-def get_product_by_name(request, _id):
+@api_view(['GET', 'POST'])
+def prodct_detail(request, _id):
   try:
     product = Product.objects.get(pk=_id)
   except:
@@ -205,7 +223,7 @@ def get_product_by_name(request, _id):
   
   if request.method == 'GET':
     serializer = ProductSerializer(product)
-    template = loader.get_template("fla_loja/product.html")
+    template = loader.get_template("fla_loja/product_detail.html")
     context = {
         "product": serializer.data,
     }
@@ -216,21 +234,11 @@ def get_product_by_name(request, _id):
     
     if serializer.is_valid():
       serializer.save() 
-    template = loader.get_template("fla_loja/product.html")
+    template = loader.get_template("fla_loja/product_detail.html")
     context = {
         "product": serializer.data,
     }
     return HttpResponse(template.render(context, request))
-  
-  if request.method == 'PUT':
-    
-    serializer = ProductSerializer(product, data=request.data)
-    
-    if serializer.is_valid():
-      serializer.save() 
-      return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
-    
-    return Response(status=status.HTTP_400_BAD_REQUEST)
   
 
 @api_view(['GET', 'POST'])
@@ -256,12 +264,16 @@ def edit_product(request, _id):
             price = float(data.get('price', 0))
             quantity_in_stock = int(data.get('quantity_in_stock', 0))
 
+            errors = False
             if price < 0:
                 messages.error(request, "O preço não pode ser negativo.")
-                return render(request, "fla_loja/edit_product.html", {"product": data})
+                errors = True
 
             if quantity_in_stock < 0:
                 messages.error(request, "A quantidade em estoque não pode ser negativa.")
+                errors = True
+            
+            if errors:
                 return render(request, "fla_loja/edit_product.html", {"product": data})
 
         except ValueError as e:
@@ -278,14 +290,10 @@ def edit_product(request, _id):
         return render(request, "fla_loja/edit_product.html", {"product": data})
 
 
-
-
 @api_view(['GET', 'POST'])
 def create_product(request):
     if request.method == 'GET':
-        template = loader.get_template("fla_loja/create_product_copy.html")
-        context = {"a": 1}
-        return HttpResponse(template.render(context, request))
+        return render(request, "fla_loja/create_product.html")
 
     if request.method == 'POST':
         new_product = request.data.copy()
@@ -299,17 +307,22 @@ def create_product(request):
             price = float(new_product.get('price', 0))
             quantity_in_stock = int(new_product.get('quantity_in_stock', 0))
 
+            errors = False
             if price < 0:
                 messages.error(request, "O preço não pode ser negativo.")
-                return render(request, "fla_loja/create_product_copy.html", {"form": new_product})
+                errors = True
 
             if quantity_in_stock < 0:
                 messages.error(request, "A quantidade em estoque não pode ser negativa.")
-                return render(request, "fla_loja/create_product_copy.html", {"form": new_product})
+                errors = True
 
+            if errors:
+                return render(request, "fla_loja/create_product.html", {"form": new_product})
+            
+            
         except ValueError as e:
             messages.error(request, f"Erro nos dados fornecidos: {e}")
-            return render(request, "fla_loja/create_product_copy.html", {"form": new_product})
+            return render(request, "fla_loja/create_product.html", {"form": new_product})
 
         # Se tudo estiver correto, salvar o produto
         serializer = ProductSerializer(data=new_product)
@@ -331,33 +344,12 @@ def delete_product(request, _id):
     
     product_to_delete.delete()
     
-    all_products = Product.objects.all()
-    template = loader.get_template("fla_loja/index.html")
-    context = {
-        "all_products": all_products,
-    }
-    
     return redirect('/')
 
 
-
-def add_product(request):
-    if request.method == 'POST':
-        form = ProductForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Produto adicionado com sucesso!')
-            return redirect('/')
-    else:
-        form = ProductForm()
-
-    return render(request, 'fla_loja/add_product.html', {'form': form})
-
-
-
 # +++++++++++++++++++++++++++++++++++++  Sales  +++++++++++++++++++++++++++++++++++++
+@api_view(['GET'])
 def sales(request):
-    # Obter todas as vendas
     sales = Sale.objects.select_related('id_client', 'id_product', 'id_employee').all()
     
     # Preparar os dados para a tabela
@@ -366,19 +358,23 @@ def sales(request):
       client = "Indisp."
       employee = "Indisp."
       product = "Indisp."
+      total_price = sale.quantity
       if sale.id_client:
         client = sale.id_client.name
       if sale.id_employee:
         employee = sale.id_employee.name
       if sale.id_product:
+        total_price *= sale.id_product.price
         product = sale.id_product.name 
+      else:
+        total_price = ' Indisp.'
         
       sales_data.append({
           'id': sale.id,  # Inclua o ID da venda aqui
           'client_name': client,
           'product_name': product,
           'quantity': sale.quantity,
-          'total_price': sale.quantity * sale.id_product.price,
+          'total_price': total_price,
           'employee_name': employee,  # Nome do vendedor
           'date': sale.data.strftime('%Y-%m-%d')  # Data da compra no formato YYYY-MM-DD
       })
@@ -390,6 +386,7 @@ def sales(request):
     return render(request, 'fla_loja/sales.html', context)
 
 
+@api_view(['GET'])
 def sale(request, product_id):
     product = get_object_or_404(Product, id=product_id)
 
@@ -399,21 +396,24 @@ def sale(request, product_id):
         date_purchased = request.POST.get("date_purchased")
         quantity = int(request.POST.get("quantity"))
 
-        # Validate the client and employee IDs
         client = Client.objects.filter(id=client_id).first()
         employee = Employee.objects.filter(id=employee_id).first()
         
+        errors = False
         if not client or not employee:
             messages.error(request, "Cliente ou Vendedor inválido.")
-            return render(request, 'fla_loja/sale.html', {'product': product})
+            errors = True
         
-        # Check if quantity is available in stock
+        
         if quantity > product.quantity_in_stock:
             messages.error(request, "Quantidade solicitada excede o estoque disponível.")
-            return render(request, 'fla_loja/sale.html', {'product': product})
+            errors = True
+        
+        
+        if errors:
+            return render(request, 'fla_loja/sale.html', {'product': product})    
         
         try:
-            # Parse the date
             parsed_date = parse_datetime(date_purchased)
             if parsed_date is None:
                 raise ValueError("Data inválida")
@@ -421,7 +421,7 @@ def sale(request, product_id):
             messages.error(request, f"Erro na data: {e}")
             return render(request, 'fla_loja/sale.html', {'product': product})
         
-        # Create the sale
+        
         Sale.objects.create(
             id_client=client,
             id_product=product,
@@ -430,36 +430,15 @@ def sale(request, product_id):
             quantity=quantity
         )
 
-        # Update the product's stock
         product.quantity_in_stock -= quantity
         product.save()
 
-        # Increment the employee's number of sales
         employee.sales_count += 1
         employee.save()
 
         return redirect('fla_loja:sales')
     
     return render(request, 'fla_loja/sale.html', {'product': product})
-
-
-
-def sale_detail(request, sale_id):
-    # Obter a venda com o ID fornecido
-    sale = get_object_or_404(Sale, id=sale_id)
-    
-    # Preparar os dados para o contexto
-    context = {
-        'client_name': sale.id_client.name,
-        'employee_name': sale.id_employee.name,
-        'product_image': sale.id_product.image.url,  # Assegure-se de que o caminho da imagem está correto
-        'product_name': sale.id_product.name,
-        'product_description': sale.id_product.description,
-        'quantity': sale.quantity,
-        'total_price': sale.quantity * sale.id_product.price,
-    }
-    
-    return render(request, 'fla_loja/sale_detail.html', context)
   
 
 @api_view(['GET', 'POST', 'DELETE'])
@@ -475,32 +454,22 @@ def delete_sale(request, _id):
     return redirect('/sales/')
 
 
+@api_view(['GET', 'POST'])
 def edit_sale(request, _id):
     sale = get_object_or_404(Sale, id=_id)
-    print("aaaa sale:", sale.quantity)
     if sale.id_product:
       product = get_object_or_404(Product, id=sale.id_product.id)
     if sale.id_employee:
       employee = get_object_or_404(Employee, id=sale.id_employee.id)
     
     if request.method == 'POST':
-        print("product:", product.quantity_in_stock)
-        print("sale:", sale.quantity)
-        print("request:", int(request.POST.get('quantity')))
         product.quantity_in_stock += sale.quantity
         employee.sales_count += sale.quantity
         form = SaleForm(request.POST, instance=sale)
         if form.is_valid():
-            # product.quantity_in_stock += sale.quantity
             product.quantity_in_stock -= int(request.POST.get('quantity'))
-            print("product:", product.quantity_in_stock)
-            print("sale:", sale.quantity)
-            print("request:", int(request.POST.get('quantity')))
-            # product.save()
             
-            # employee.sales_count += sale.quantity
             employee.sales_count -= int(request.POST.get('quantity'))
-            # employee.save()
             
             prod_serializer = ProductSerializer(data=product)
             if prod_serializer.is_valid():
@@ -517,9 +486,10 @@ def edit_sale(request, _id):
     else:
         form = SaleForm(instance=sale)
     
-    return render(request, 'fla_loja/edit_sale.html', {'form': form, 'sale': sale})
+    return render(request, 'fla_loja/edit_sale.html', { 'form': form, 'sale': sale })
 
 # +++++++++++++++++++++++++++++++++++++  Estoque  +++++++++++++++++++++++++++++++++++++
+@api_view(['GET'])
 def stock(request):
     # Obter todos os produtos
     products = Product.objects.all()
