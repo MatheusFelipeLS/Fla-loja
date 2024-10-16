@@ -8,11 +8,15 @@
       style="width: 500; height: 500;"
     >
   </div>
-  <div class="top--home" style="max-width: 640px; margin: 0 auto; padding-bottom: 2rem;">
-    <a href="{% url 'fla_loja:create_product' %}" class="button button--add" >
-      <span>+</span>
-    </a>
-  </div>
+  {% if isEmployee %}
+    <div class="top--home" style="max-width: 640px; margin: 0 auto; padding-bottom: 2rem;">
+      <a href="{% url 'fla_loja:create_product' %}" class="button button--add" >
+        <span>+</span>
+      </a>
+    </div>
+  {% else %}
+  <div style="margin-top: 5rem;"></div>
+  {% endif %}
   {% if all_products %}
     <div class="products">
       {% for product in all_products %}

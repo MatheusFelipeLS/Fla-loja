@@ -1,6 +1,8 @@
-from django.shortcuts import render, redirect, get_object_or_404, redirect
+from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
 from django.template import loader
+from django.contrib.auth import logout
+from django.contrib.auth.hashers import make_password, check_password
 from django.contrib import messages
 from django.utils.dateparse import parse_datetime
 
@@ -12,6 +14,79 @@ from .models import *
 from .serializer import *
 from .forms import *
 
+@api_view(['GET', 'POST'])
+def index(request):
+    all_products = Product.objects.all()
+    return render(
+        request, 
+        "fla_loja/index.html", 
+        {
+            'isLogged': request.session.get('isLogged', False),
+            'isEmployee': request.session.get('isEmployee', False),
+            'all_products': all_products
+        }
+    )
+
+
+def sign_in(request):
+    if request.method == 'POST':
+        email = request.POST['email']
+        password = request.POST['password']
+        
+        try:
+            client = Client.objects.get(email=email)
+            
+            # Verificar se a senha está correta
+            if check_password(password, client.password):
+                request.session['id'] = client.id
+                request.session['isLogged'] = True
+                request.session['isEmployee'] = False
+                return redirect('/')  
+            else:
+                messages.error(request, 'Senha incorreta.')
+        except Client.DoesNotExist:
+            try:
+                employee = Employee.objects.get(email=email)
+                if password == employee.password:
+                    request.session['id'] = employee.id
+                    request.session['isLogged'] = True
+                    request.session['isEmployee'] = True
+                    return redirect('/') 
+            except Employee.DoesNotExist:
+                messages.error(request, 'Email e/ou senha incorreto(s)')
+    
+    return render(request, 'fla_loja/sign_in.html')
+
+
+@api_view(['GET', 'POST'])
+def sign_up(request):
+  if request.method == 'GET':
+    return render(request, "fla_loja/sign_up.html")
+  
+  if request.method == 'POST':
+    new_client = request.data.copy()
+    
+    new_client['password'] = make_password(new_client['password'])
+    
+    # Remova o csrfmiddlewaretoken
+    if 'csrfmiddlewaretoken' in new_client:
+        del new_client['csrfmiddlewaretoken']
+    
+    serializer = ClientSerializer(data=new_client)
+    
+    if(serializer.is_valid()):
+      serializer.save()
+      
+      return redirect('/signin/')
+    
+    print(serializer.errors)
+    return Response(status=status.HTTP_400_BAD_REQUEST) 
+
+
+def log_out(request):
+    logout(request)
+    return redirect('/')
+
 
 # +++++++++++++++++++++++++++++++++++++  Clients  +++++++++++++++++++++++++++++++++++++
 @api_view(['GET'])
@@ -19,19 +94,43 @@ def clients(request):
     all_clients = Client.objects.all()
     template = loader.get_template("fla_loja/clients.html")
     context = {
+        'isLogged': request.session.get('isLogged', False),
+        'isEmployee': request.session.get('isEmployee', False),
         "clients": all_clients,
     }
     return HttpResponse(template.render(context, request))
 
 
 @api_view(['GET'])
+def client_detail_autoview(request):
+    client = Client.objects.get(id=request.session.get('id'))
+    return render(
+        request, 
+        'fla_loja/client_detail.html', 
+        {
+            'isLogged': request.session.get('isLogged', False),
+            'isEmployee': request.session.get('isEmployee', False),
+            'client': client
+        }
+    )
+    
+
+@api_view(['GET'])
 def client_detail(request, id):
     client = get_object_or_404(Client, id=id)
-    return render(request, 'fla_loja/client_detail.html', {'client': client})
+    return render(
+        request, 
+        'fla_loja/client_detail.html', 
+        {
+            'isLogged': request.session.get('isLogged', False),
+            'isEmployee': request.session.get('isEmployee', False),
+            'client': client
+        }
+    )
 
 
 @api_view(['GET', 'POST'])
-def edit_client(request, id):
+def edit_client_true(request, id):
     client = get_object_or_404(Client, id=id)
     
     if request.method == 'POST':
@@ -42,7 +141,54 @@ def edit_client(request, id):
     else:
         form = ClientForm(instance=client)
     
-    return render(request, 'fla_loja/edit_client.html', {'form': form, 'client': client})
+    return render(
+        request, 
+        'fla_loja/edit_client.html', 
+        {
+            'isLogged': request.session.get('isLogged', False),
+            'isEmployee': request.session.get('isEmployee', False),
+            'form': form, 
+            'client': client
+        }
+    )
+
+@api_view(['GET', 'POST'])
+def edit_client(request, id):
+    try:
+        client = Client.objects.get(pk=id)
+    except Client.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    
+    if request.method == 'GET':
+        serializer = ClientSerializer(client)
+        template = loader.get_template("fla_loja/edit_client.html")
+        context = {
+            'isLogged': request.session.get('isLogged', False),
+            'isEmployee': request.session.get('isEmployee', False),
+            "client": serializer.data,
+        }
+        return HttpResponse(template.render(context, request))
+
+    if request.method == 'POST':
+        data = request.data.copy()
+        if data['password'] != '':
+            data['password'] = make_password(data['password'])
+            
+        serializer = ClientSerializer(client, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            
+            return redirect('/')
+        
+        return render(
+            request, 
+            "fla_loja/edit_client.html", 
+            {
+                'isLogged': request.session.get('isLogged', False),
+                'isEmployee': request.session.get('isEmployee', False),
+                "client": data
+            }
+        )
 
 
 @api_view(['GET', 'POST'])
@@ -67,10 +213,19 @@ def delete_client(request, id):
 @api_view(['GET', 'POST'])
 def create_client(request):
   if request.method == 'GET':
-    return render(request, "fla_loja/create_client.html")
+    return render(
+        request, 
+        "fla_loja/create_client.html",
+        {
+            'isLogged': request.session.get('isLogged', False),
+            'isEmployee': request.session.get('isEmployee', False),
+        }
+    )
   
   if request.method == 'POST':
     new_client = request.data.copy()
+    
+    new_client['password'] = make_password('')
     
     # Remova o csrfmiddlewaretoken
     if 'csrfmiddlewaretoken' in new_client:
@@ -96,6 +251,20 @@ def employees(request):
         "employees": all_employees,
     }
     return HttpResponse(template.render(context, request))
+
+
+@api_view(['GET'])
+def employee_detail_autoview(request):
+    employee = Employee.objects.get(id=request.session.get('id'))
+    return render(
+        request, 
+        'fla_loja/employee_detail.html', 
+        {
+            'isLogged': request.session.get('isLogged', False),
+            'isEmployee': request.session.get('isEmployee', False),
+            'employee': employee
+        }
+    )
 
 
 @api_view(['GET'])
@@ -205,17 +374,7 @@ def create_employee(request):
 
 # +++++++++++++++++++++++++++++++++++++  Products  +++++++++++++++++++++++++++++++++++++
 @api_view(['GET', 'POST'])
-def index(request):
-    all_products = Product.objects.all()
-    template = loader.get_template("fla_loja/index.html")
-    context = {
-        "all_products": all_products,
-    }
-    return HttpResponse(template.render(context, request))
-
-
-@api_view(['GET', 'POST'])
-def prodct_detail(request, _id):
+def product_detail(request, _id):
   try:
     product = Product.objects.get(pk=_id)
   except:
@@ -225,6 +384,8 @@ def prodct_detail(request, _id):
     serializer = ProductSerializer(product)
     template = loader.get_template("fla_loja/product_detail.html")
     context = {
+        'isLogged': request.session.get('isLogged', False),
+        'isEmployee': request.session.get('isEmployee', False),
         "product": serializer.data,
     }
     return HttpResponse(template.render(context, request))
@@ -236,6 +397,8 @@ def prodct_detail(request, _id):
       serializer.save() 
     template = loader.get_template("fla_loja/product_detail.html")
     context = {
+        'isLogged': request.session.get('isLogged', False),
+        'isEmployee': request.session.get('isEmployee', False),
         "product": serializer.data,
     }
     return HttpResponse(template.render(context, request))
@@ -252,6 +415,8 @@ def edit_product(request, _id):
         serializer = ProductSerializer(product)
         template = loader.get_template("fla_loja/edit_product.html")
         context = {
+            'isLogged': request.session.get('isLogged', False),
+            'isEmployee': request.session.get('isEmployee', False),
             "product": serializer.data,
         }
         return HttpResponse(template.render(context, request))
@@ -293,7 +458,14 @@ def edit_product(request, _id):
 @api_view(['GET', 'POST'])
 def create_product(request):
     if request.method == 'GET':
-        return render(request, "fla_loja/create_product.html")
+        return render(
+            request, 
+            "fla_loja/create_product.html",
+            {
+                'isLogged': request.session.get('isLogged', False),
+                'isEmployee': request.session.get('isEmployee', False),
+            }
+        )
 
     if request.method == 'POST':
         new_product = request.data.copy()

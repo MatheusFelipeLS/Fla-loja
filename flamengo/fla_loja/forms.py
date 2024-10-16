@@ -4,7 +4,7 @@ from .models import *
 class ClientForm(forms.ModelForm):
     class Meta:
         model = Client
-        fields = ['name', 'address', 'cpf', 'phone', 'email']
+        fields = ['name', 'address', 'cpf', 'phone', 'email', 'password']
 
 class EmployeeForm(forms.ModelForm):
     class Meta:
@@ -18,8 +18,8 @@ class ProductForm(forms.ModelForm):
         fields = ['name', 'description', 'price', 'quantity_in_stock', 'image']
         
         
-class SaleForm(forms.ModelForm):
+class PurchasesCompletedForm(forms.ModelForm):
     class Meta:
-        model = Sale
-        fields = ['id_client', 'id_product', 'id_employee', 'data', 'quantity']
+        model = PurchasesCompleted
+        fields = ['id_car', 'id_product', 'quantity']
         

@@ -21,18 +21,46 @@
           <li class="nav-item">
             <a class="nav-link active" style="color: red;" aria-current="page" href="/">Produtos</a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link" style="color: red;" href="{% url 'fla_loja:employees' %}">Vendedores</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" style="color: red;" href="{% url 'fla_loja:clients' %}">Clientes</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" style="color: red;" href="{% url 'fla_loja:sales' %}">Vendas</a>      
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" style="color: red;" href="{% url 'fla_loja:stock' %}">Estoque</a>      
-          </li>
+          {% if isEmployee %}
+            <li class="nav-item">
+              <a class="nav-link" style="color: red;" href="{% url 'fla_loja:clients' %}">Clientes</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" style="color: red;" href="{% url 'fla_loja:sales' %}">Vendas</a>      
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" style="color: red;" href="{% url 'fla_loja:stock' %}">Estoque</a>      
+            </li>
+          {% endif %}
+
+          <form class="d-flex" role="search" style="margin-left: 2rem; margin-right: 2rem;">
+            <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+            <button class="btn btn-outline-danger" style="color: red;" type="submit">Pesquisar</button>
+          </form>
+
+          {% if isLogged %}
+            <li class="nav-item dropdown" style="color: red;">
+              <a class="nav-link dropdown-toggle" href="#" style="color: red;" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                Dropdown
+              </a>
+              <ul class="dropdown-menu">
+                {% if isEmployee %} 
+                  <li><a class="dropdown-item" href="{% url 'fla_loja:employee_detail_autoview' %}" style="color: red;">Meus dados</a></li>
+                  <li><a class="dropdown-item" href="#" style="color: red;">Minhas vendas</a></li>
+                {% else %}
+                  <li><a class="dropdown-item" href="{% url 'fla_loja:client_detail_autoview' %}" style="color: red;">Meus dados</a></li>
+                  <li><a class="dropdown-item" href="#" style="color: red;">Minhas compras</a></li>
+                  <li><a class="dropdown-item" href="#" style="color: red;">Meu carrinho</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                {% endif %}
+                  <li><a class="dropdown-item" href="{% url 'fla_loja:logout' %}" style="color: red;">Sair</a></li>
+              </ul>
+            </li>
+          {% else %}
+            <li class="nav-item">
+              <a class="nav-link" style="color: red;" href="{% url 'fla_loja:sign_in' %}">Login</a>      
+            </li>
+          {% endif %}
         </ul>
       </div>
     </div>

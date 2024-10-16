@@ -73,6 +73,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'flamengo.wsgi.application'
 
+SESSION_COOKIE_AGE = 3600
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases

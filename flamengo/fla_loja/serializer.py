@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Client, Employee, Sale, Product
+from .models import *
 
 
 class ClientSerializer(serializers.ModelSerializer):
@@ -24,12 +24,18 @@ class EmployeeSerializer(serializers.ModelSerializer):
       return value
     
     
-class SaleSerializer(serializers.ModelSerializer):
+class PurchasesCompletedSerializer(serializers.ModelSerializer):
   class Meta:
-    model = Sale
+    model = PurchasesCompleted
     fields = '__all__'
     
     
+class PurchasesNotCompletedSerializer(serializers.ModelSerializer):
+  class Meta:
+    model = PurchasesNotCompleted
+    fields = '__all__'
+      
+  
 class ProductSerializer(serializers.ModelSerializer):
   class Meta:
     model = Product

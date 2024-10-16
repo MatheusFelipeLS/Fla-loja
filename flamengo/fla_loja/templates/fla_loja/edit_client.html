@@ -1,20 +1,82 @@
 {% extends 'fla_loja/base.html' %}
 
 {% block content %}
-<main class="main main--edit-client" style="padding: 20px;">
-  <div style="display: flex; flex-direction: column; margin-top: 20px;">
-    <form method="post">
-      {% csrf_token %}
-      {{ form.as_p }}
-      <button type="submit" class="btn btn-primary">Salvar alterações</button>
-    </form>
-    <a 
-      href="{% url 'fla_loja:clients' %}" 
-      class="btn btn-secondary"
-      style="width: 100px; height: 50px; margin-top: 30px;"
-    >
-      Cancelar
-    </a>
+
+<div style="max-width: 640px; margin: 0 auto">
+  <a href="/" style="max-width: 640px; align-items: center; text-decoration: none; color: black;">
+    <svg style="margin-top: 50px; margin-bottom: 20px;" xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16">
+      <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/>
+    </svg>
+  </a>
+</div>
+
+<form enctype="multipart/form-data" action="{% url 'fla_loja:edit_client' client.id %}" method="POST" id="myForm" class="form-floating1" style="max-width: 640px; margin: 0 auto; margin-top: 20px; align-content: end;">
+  {% csrf_token %}
+  <div class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px;">
+    <input name="name" class="form-control" value="{{ client.name }}" placeholder="Nome" id="floatingTextarea" style="resize: none;"></input>
+    <label for="floatingTextarea">Nome</label>
   </div>
-</main>
+
+  <div class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px;">
+    <input name="address" class="form-control" value="{{ client.address }}" placeholder="Endereço" id="floatingTextarea2" style="resize: none;"></input>
+    <label for="floatingTextarea2">Endereço</label>
+  </div>
+
+  <div class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px;">
+    <input name="cpf" class="form-control" value="{{ client.cpf }}" placeholder="000.000.000-00" id="floatingTextarea3" style="resize: none;"></input>
+    <label for="floatingTextarea3">CPF</label>
+  </div>
+
+  <div class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px;">
+    <input name="phone" class="form-control" value="{{ client.phone }}" placeholder="(00) 91234-5678" id="floatingTextarea4" style="resize: none;"></input>
+    <label for="floatingTextarea4">Telefone</label>
+  </div>
+
+  <div class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px;">
+    <input name="email" class="form-control" value="{{ client.email }}" placeholder="example@domain.com" id="floatingTextarea5" style="resize: none;"></input>
+    <label for="floatingTextarea5">Email</label>
+  </div>
+
+  <div class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px;">
+    <input type="password" name="password" class="form-control" id="floatingTextarea6" style="resize: none;"></input>
+    <label for="floatingTextarea6">Senha</label>
+  </div>
+
+  <div class="col-12">
+    <button class="btn btn-primary" type="submit" style="max-width: 640px; margin: 0 auto; margin-top: 20px;">
+      Confirmar
+    </button>
+  </div>
+</form>
+
+<script>
+  document.getElementById('myForm').addEventListener('submit', function(event) {
+      event.preventDefault(); // Impede o envio padrão do formulário
+
+      // Cria o objeto FormData com os dados do formulário
+      var formData = new FormData(this);
+
+      // Envia a requisição POST usando fetch
+      fetch("{% url 'fla_loja:edit_client' client.id %}", {
+          method: 'POST',
+          body: formData // Envia os dados como FormData
+      })
+      .then(response => {
+          if (response.ok) {
+              // Redireciona para a página do produto
+              window.location.href = "{% url 'fla_loja:index' %}";
+          } else {
+              return response.text().then(text => {
+                  console.error('Erro:', text);
+                  alert('Erro ao editar o produto. Verifique os dados e tente novamente.');
+              });
+          }
+      })
+      .catch((error) => {
+          console.error('Erro:', error);
+          alert('Erro ao enviar a solicitação.');
+      });
+  });
+</script>
+
 {% endblock %}

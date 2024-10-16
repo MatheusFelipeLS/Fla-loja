@@ -16,7 +16,11 @@
           alt="Product image"
           style="width: 300px; height: 300px;"
         >
-        <a href="{% url 'fla_loja:sale' product.id %}" class="btn btn-primary" style="margin-top: 10px;">Comprar</a>
+        {% if isEmployee %}
+        <div style="margin-bottom: 1rem;"></div>
+        {% else %}
+          <a href="{% url 'fla_loja:sale' product.id %}" class="btn btn-primary" style="margin-top: 10px;">Comprar</a>
+        {% endif %}
       </div>
       <article class="project" style="margin-left: 20px;">
         <article class="project__content">
