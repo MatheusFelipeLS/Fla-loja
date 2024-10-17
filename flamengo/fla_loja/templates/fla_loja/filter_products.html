@@ -1,0 +1,90 @@
+{% extends 'fla_loja/base.html' %}
+
+{% block content %}
+
+<div style="display: flex; flex-direction: row; max-width: 640px; margin: 0 auto; margin-top: 50px; margin-bottom: 20px;">
+  <a href="/" style="max-width: 640px; align-items: center; text-decoration: none; color: black;">
+    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16">
+      <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/>
+    </svg>
+  </a>
+  <h1 style="margin-left: 9rem;">Filtrar produtos</h1>
+</div>
+
+<form action="{% url 'fla_loja:filter_products' %}" method="POST" id="myForm" class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px; align-content: end;">
+  {% csrf_token %}
+
+  <!-- Exibir mensagens de erro, se houver -->
+  {% if messages %}
+    <div class="alert alert-danger" style="margin-top: 20px;">
+      {% for message in messages %}
+        <p>{{ message }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+
+  <div class="input-group mb-3">
+    <div class="input-group-text" style="margin-top: 20px;">
+      <input id="checkbox_name" name="checkbox_name" class="form-check-input mt-0" type="checkbox" value="" aria-label="Checkbox for following text input" checked>
+    </div>
+    <div class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px;">
+      <input name="name" class="form-control" id="floatingTextarea" style="resize: none;"></input>
+      <label for="floatingTextarea">Nome do produto</label>
+    </div>
+  </div>
+
+  <div class="input-group mb-3">
+    <div class="input-group-text" style="margin-top: 20px;">
+      <input id="checkbox_price" name="checkbox_price" class="form-check-input mt-0" type="checkbox" value="" aria-label="Checkbox for following text input">
+    </div>
+    <div style="display: flex; flex-direction: row;">
+      <div class="form-floating" style="max-width: 100px; margin: 0 auto; margin-top: 20px;">
+        <input name="low_price" class="form-control" id="floatingTextarea2" style="resize: none;"></input>
+        <label for="floatingTextarea2">Preço</label>
+      </div>
+      <div style="font-size: 30px; margin-top: 1.5rem; margin-left: 0.5rem; margin-right: 0.5rem;">-</div>
+      <div class="form-floating" style="max-width: 100px; margin: 0 auto; margin-top: 20px;">
+        <input name="high_price" class="form-control" id="floatingTextarea3" style="resize: none;"></input>
+        <label for="floatingTextarea3">Preço</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-group mb-3">
+    <div class="input-group-text" style="margin-top: 20px;">
+      <input id="checkbox_category" name="checkbox_category" class="form-check-input mt-0" type="checkbox" value="" aria-label="Checkbox for following text input">
+    </div>
+    <div class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px;">
+      <input name="category" class="form-control" id="floatingTextarea4" style="resize: none;"></input>
+      <label for="floatingTextarea4">Categoria</label>
+    </div>
+  </div>
+
+  <div class="input-group mb-3">
+    <div class="input-group-text" style="margin-top: 20px;">
+      <input id="checkbox_mari" name="checkbox_mari" class="form-check-input mt-0" type="checkbox" value="" aria-label="Checkbox for following text input">
+    </div>
+    <div class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px;">
+      <input id="floatingTextarea5" class="form-control" type="text" value="Fabricado em Mari" aria-label="Disabled input example" disabled readonly>
+    </div>
+  </div>
+
+  {% if isEmployee %}
+  <div class="input-group mb-3">
+    <div class="input-group-text" style="margin-top: 20px;">
+      <input id="checkbox_less5" name="checkbox_less5" class="form-check-input mt-0" type="checkbox" value="" aria-label="Checkbox for following text input">
+    </div>
+    <div class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px;">
+      <input id="floatingTextarea6" class="form-control" type="text" value="Menos que 5 no estoque" aria-label="Disabled input example" disabled readonly>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="col-12">
+    <button class="btn btn-primary" type="submit" style="max-width: 640px; margin: 0 auto; margin-top: 20px;">
+      Confirmar
+    </button>
+  </div>
+</form>
+{% endblock %}

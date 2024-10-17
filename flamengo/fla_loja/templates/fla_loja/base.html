@@ -32,16 +32,21 @@
               <a class="nav-link" style="color: red;" href="{% url 'fla_loja:stock' %}">Estoque</a>      
             </li>
           {% endif %}
-
-          <form class="d-flex" role="search" style="margin-left: 2rem; margin-right: 2rem;">
-            <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+          
+          
+          <div class="input-group mb-0.5" style="margin-left: 3rem; margin-right: 2rem;">
+            <button style="color: red;" class="btn btn-outline-danger dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"></button>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="{% url 'fla_loja:filter_products' %}">Filtrar produtos</a></li>
+            </ul>
+            <input type="text" class="form-control" aria-label="Text input with dropdown button">
             <button class="btn btn-outline-danger" style="color: red;" type="submit">Pesquisar</button>
-          </form>
+          </div>
 
           {% if isLogged %}
             <li class="nav-item dropdown" style="color: red;">
               <a class="nav-link dropdown-toggle" href="#" style="color: red;" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                Dropdown
+                Minha conta
               </a>
               <ul class="dropdown-menu">
                 {% if isEmployee %} 

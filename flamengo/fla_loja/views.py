@@ -402,7 +402,57 @@ def product_detail(request, _id):
         "product": serializer.data,
     }
     return HttpResponse(template.render(context, request))
-  
+
+
+@api_view(['GET', 'POST'])
+def filter_products(request):
+    if request.method == 'GET':
+        return render(
+            request, 
+            "fla_loja/filter_products.html",
+            {
+                'isLogged': request.session.get('isLogged', False),
+                'isEmployee': request.session.get('isEmployee', False),
+            }
+        )
+    
+    elif request.method == 'POST':
+        products = Product.objects.all()
+        
+        if request.POST.get("checkbox_name") == '':
+            name = request.POST.get("name")
+            if name:
+                products = products.filter(name__icontains=name)
+                    
+        if request.POST.get("checkbox_price") == '':
+            low_price = request.POST.get("low_price")
+            high_price = request.POST.get("high_price")
+            if low_price:
+                products = products.filter(price__gte=low_price)
+            if high_price:
+                products = products.filter(price__lte=high_price)
+            
+        if request.POST.get("checkbox_category") == '':
+            category = request.POST.get("category")
+            if category:
+                products = products.filter(category__exact=category)
+            
+        if request.POST.get("checkbox_mari") == '':
+            products = products.filter(made_in__exact='Mari')
+            
+        if request.POST.get("checkbox_less5") == '':
+            products = products.filter(quantity_in_stock__lte=4)
+        
+        return render(
+            request, 
+            "fla_loja/filtered_products.html",
+            {
+                'isLogged': request.session.get('isLogged', False),
+                'isEmployee': request.session.get('isEmployee', False),
+                'all_products': products
+            }
+        )
+
 
 @api_view(['GET', 'POST'])
 def edit_product(request, _id):
@@ -558,7 +608,7 @@ def sales(request):
     return render(request, 'fla_loja/sales.html', context)
 
 
-@api_view(['GET'])
+@api_view(['GET', 'POST'])
 def sale(request, product_id):
     product = get_object_or_404(Product, id=product_id)
 
@@ -610,7 +660,15 @@ def sale(request, product_id):
 
         return redirect('fla_loja:sales')
     
-    return render(request, 'fla_loja/sale.html', {'product': product})
+    return render(
+        request, 
+        'fla_loja/sale.html', 
+        {
+            'isLogged': request.session.get('isLogged', False),
+            'isEmployee': request.session.get('isEmployee', False),
+            'product': product
+        }
+    )
   
 
 @api_view(['GET', 'POST', 'DELETE'])

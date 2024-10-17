@@ -18,12 +18,17 @@
         >
         {% if isEmployee %}
         <div style="margin-bottom: 1rem;"></div>
-        {% else %}
+        {% endif %}
+
+        {% if isLogged %}
           <a href="{% url 'fla_loja:sale' product.id %}" class="btn btn-primary" style="margin-top: 10px;">Comprar</a>
+        {% else %}
+          <a href="{% url 'fla_loja:sign_in' %}" class="btn btn-primary" style="margin-top: 10px;">Comprar</a>
         {% endif %}
       </div>
       <article class="project" style="margin-left: 20px;">
         <article class="project__content">
+          {% if isEmployee %}
           <div style="margin: 0 auto; align-items: center; justify-content: space-around;">
             <a href="{% url 'fla_loja:edit_product' product.id %}" style="text-decoration: none; color: black;">
               <svg style="margin-top: 20px; width: 25px; height: 25px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
@@ -38,12 +43,14 @@
               </svg>
             </a>
           </div>
+          {% endif %}
             <h2 
             class="project__heading" 
               style="margin-top: 20px; margin-bottom: 20px;">
               {{ product.name }}
             </h2>
             <p>{{ product.description }}</p>
+            <p>{{ product.made_in }}</p>
             <p>Preço: R${{ product.price }} </p>
             <p>Em estoque: {{ product.quantity_in_stock }} un.</p>
           </article>
