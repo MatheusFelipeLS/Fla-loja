@@ -12,7 +12,7 @@ class Client(models.Model):
 class Employee(models.Model):
   name = models.CharField(max_length=100, default='')
   wage = models.FloatField(default=0.0)
-  sales_count = models.IntegerField(default=0)
+  sales_count = models.FloatField(default=0.0)
   photo = models.ImageField(default='', upload_to='flamengo/fla_loja/static/fla_loja/employee', height_field=None, width_field=None, max_length=100)
   email = models.EmailField(default='')
   password = models.CharField(max_length=100, default='')
@@ -28,10 +28,10 @@ class Product(models.Model):
 
 class Car(models.Model):
   id_client = models.ForeignKey(Client, default='', on_delete=models.SET_NULL, null=True)
-  id_employee = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True)
-  data = models.DateField("Date purchased")
+  id_employee = models.ForeignKey(Employee, default='', on_delete=models.SET_NULL, null=True)
+  date = models.DateField("Date purchased")
   payment_method = models.CharField(max_length=20, default='')
-  status = models.CharField(max_length=30, default='')
+  status = models.CharField(max_length=30, default='Não finalizado')
   
   
 class PurchasesNotCompleted(models.Model):

@@ -3,22 +3,16 @@
 {% block content %}
 <main class="main main--sale" style="padding: 20px;">
 <div style="display: flex; flex-direction: column;">
-  <h1 style="margin-top: 1rem; margin-bottom: 1rem;">Comprar Produto</h1>
+  <h1 style="margin-top: 2rem; margin-bottom: 3rem;">Comprar Produto</h1>
 
-  <form method="post">
+  <form method="post" action="{% url 'fla_loja:buy_car' %}">
       {% csrf_token %}
-      <div class="form-group" style="margin-bottom: 15px;">
+      <div class="form-group" style="margin-bottom: 2rem;">
         <label for="employee_id">ID do Vendedor:</label>
         <input style="margin-top: 10px;" type="text" id="employee_id" name="employee_id" class="form-control" required>
       </div>
 
-      <div class="form-group" style="margin-bottom: 15px;">
-        <label for="quantity">Quantidade:</label>
-        <input style="margin-top: 10px;" type="number" id="quantity" name="quantity" class="form-control" min="1" max="{{ product.quantity_in_stock }}" required>
-        <small>Disponível em estoque: {{ product.quantity_in_stock }}</small>
-      </div>
-
-      <div class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 20px; margin-bottom: 20px;">
+      <div class="form-floating" style="max-width: 640px; margin: 0 auto; margin-top: 15px; margin-bottom: 3rem;">
         <select name="payment_method" class="form-select form-select-sm" aria-label="Small select example">
           <option selected></option>
           <option value="pix">Pix</option>
@@ -36,7 +30,7 @@
 <div>
 
   {% if messages %}
-    <div class="alert alert-danger" style="margin-top: 20px;">
+    <div class="alert alert-danger" style="margin-top: 15px;">
       {% for message in messages %}
       <p>{{ message }}</p>
       {% endfor %}

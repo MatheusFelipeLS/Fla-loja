@@ -1,0 +1,29 @@
+{% extends 'fla_loja/base.html' %}
+
+{% block content %}
+<main class="main main--sale" style="padding: 20px;">
+<div style="display: flex; flex-direction: column; margin-bottom: 5rem;">
+  <h1 style="margin-top: 2rem; margin-bottom: 2rem;">Adicionar ao carrinho</h1>
+
+  <form method="post" action="{% url 'fla_loja:add_to_car' product.id %}">
+      {% csrf_token %}
+      <div class="form-group" style="margin-top: 1rem; margin-bottom: 2rem;">
+        <label for="quantity">Quantidade:</label>
+        <input style="margin-top: 10px;" type="number" id="quantity" name="quantity" class="form-control" min="1" max="{{ product.quantity_in_stock }}" required>
+        <small>Disponível em estoque: {{ product.quantity_in_stock }}</small>
+      </div>
+      
+      <button type="submit" class="btn btn-success">Adicionar</button>
+      <a href="{% url 'fla_loja:index' %}" class="btn btn-secondary" style="margin-left: 10px;">Cancelar</a>
+    </form>
+<div>
+
+  {% if messages %}
+    <div class="alert alert-danger" style="margin-top: 20px;">
+      {% for message in messages %}
+      <p>{{ message }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+</main>
+{% endblock %}

@@ -3,9 +3,14 @@ from django.conf import settings
 from django.conf.urls.static import static
 from . import views
 
+from django.contrib import admin
+
 app_name = "fla_loja"
 
 urlpatterns = [
+    path('admin/', admin.site.urls),
+    
+    
     path('', views.index, name='index'),
     path('signin/', views.sign_in, name='sign_in'),
     path('signup/', views.sign_up, name='sign_up'),
@@ -25,25 +30,24 @@ urlpatterns = [
     path('client/', views.client_detail_autoview, name='client_detail_autoview'),
     path('client/<int:id>/edit/', views.edit_client, name='edit_client'),
     path('client/<int:id>/delete/', views.delete_client, name='delete_client'),
-    path('create_client/', views.create_client, name='create_client'),
 
 
     # +++++++++++++++++++++++++++  Vendedores  +++++++++++++++++++++++++++
-    path('employees/', views.employees, name='employees'),
     path('employee/<int:id>/', views.employee_detail, name='employee_detail'),
     path('employee/', views.employee_detail_autoview, name='employee_detail_autoview'),
-    path('employee/<int:id>/edit/', views.edit_employee, name='edit_employee'),
-    path('employee/<int:id>/delete/', views.delete_employee, name='delete_employee'),
-    path('create_employee/', views.create_employee, name='create_employee'),
 
 
     # +++++++++++++++++++++++++++  Vendas  +++++++++++++++++++++++++++
     path('sales/', views.sales, name='sales'),
-    path('sale/<int:product_id>/', views.sale, name='sale'),
+    path('sale/<int:product_id>/', views.individual_sale, name='individual_sale'),
     path('delete_sale/<int:_id>/', views.delete_sale, name='delete_sale'),
     path('edit_sale/<int:_id>/', views.edit_sale, name='edit_sale'),
 
 
+    path('car/', views.mycar, name='mycar'),
+    path('my_orders/', views.my_orders, name='my_orders'),
+    path('add_to_car/<int:_product_id>/', views.add_to_car, name='add_to_car'),
+    path('buy_car/', views.buy_car, name='buy_car'),
     # +++++++++++++++++++++++++++  Estoque  +++++++++++++++++++++++++++
     path('stock/', views.stock, name='stock'),
     

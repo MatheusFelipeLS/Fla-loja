@@ -10,6 +10,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 
+from datetime import datetime
+
 from .models import *
 from .serializer import *
 from .forms import *
@@ -77,6 +79,13 @@ def sign_up(request):
     if(serializer.is_valid()):
       serializer.save()
       
+      last_client = Client.objects.last()
+      Car.objects.create(
+            id_client=last_client,
+            status='Carrinho atual',
+            date=datetime.today().strftime('%Y-%m-%d')
+        )
+      
       return redirect('/signin/')
     
     print(serializer.errors)
@@ -128,29 +137,6 @@ def client_detail(request, id):
         }
     )
 
-
-@api_view(['GET', 'POST'])
-def edit_client_true(request, id):
-    client = get_object_or_404(Client, id=id)
-    
-    if request.method == 'POST':
-        form = ClientForm(request.POST, instance=client)
-        if form.is_valid():
-            form.save()
-            return redirect('fla_loja:client_detail', id=client.id)
-    else:
-        form = ClientForm(instance=client)
-    
-    return render(
-        request, 
-        'fla_loja/edit_client.html', 
-        {
-            'isLogged': request.session.get('isLogged', False),
-            'isEmployee': request.session.get('isEmployee', False),
-            'form': form, 
-            'client': client
-        }
-    )
 
 @api_view(['GET', 'POST'])
 def edit_client(request, id):
@@ -208,51 +194,9 @@ def delete_client(request, id):
             'is_employee': 0,
         }
     )
-
-
-@api_view(['GET', 'POST'])
-def create_client(request):
-  if request.method == 'GET':
-    return render(
-        request, 
-        "fla_loja/create_client.html",
-        {
-            'isLogged': request.session.get('isLogged', False),
-            'isEmployee': request.session.get('isEmployee', False),
-        }
-    )
-  
-  if request.method == 'POST':
-    new_client = request.data.copy()
     
-    new_client['password'] = make_password('')
     
-    # Remova o csrfmiddlewaretoken
-    if 'csrfmiddlewaretoken' in new_client:
-        del new_client['csrfmiddlewaretoken']
-    
-    serializer = ClientSerializer(data=new_client)
-    
-    if(serializer.is_valid()):
-      serializer.save()
-      
-      return redirect('/clients/')
-    
-    print(serializer.errors)
-    return Response(status=status.HTTP_400_BAD_REQUEST) 
-
-
 # +++++++++++++++++++++++++++++++++++++  Employees  +++++++++++++++++++++++++++++++++++++
-@api_view(['GET'])
-def employees(request):
-    all_employees = Employee.objects.all()
-    template = loader.get_template("fla_loja/employees.html")
-    context = {
-        "employees": all_employees,
-    }
-    return HttpResponse(template.render(context, request))
-
-
 @api_view(['GET'])
 def employee_detail_autoview(request):
     employee = Employee.objects.get(id=request.session.get('id'))
@@ -271,106 +215,6 @@ def employee_detail_autoview(request):
 def employee_detail(request, id):
     employee = get_object_or_404(Employee, id=id)
     return render(request, 'fla_loja/employee_detail.html', {'employee': employee})
-
-
-@api_view(['GET', 'POST'])
-def edit_employee(request, id):
-    employee = get_object_or_404(Employee, id=id)
-    
-    if request.method == 'POST':
-        form = EmployeeForm(request.POST, instance=employee)
-
-        if form.is_valid():
-            # Verificação manual para salário e número de vendas
-            salary = form.cleaned_data.get('wage', 0)
-            number_of_sales = form.cleaned_data.get('sales_count', 0)
-
-            errors = False
-            if salary < 0:
-                messages.error(request, "Salário não pode ser negativo.")
-                errors = False
-
-            if number_of_sales < 0:
-                messages.error(request, "Quantidade de vendas não pode ser negativa.")
-                errors = False
-
-            if errors:
-                return render(request, 'fla_loja/edit_employee.html', {'form': form, 'employee': employee})
-            
-            
-            # Se tudo estiver correto, salvar as alterações
-            form.save()
-            return redirect('fla_loja:employee_detail', id=employee.id)
-    else:
-        form = EmployeeForm(instance=employee)
-    
-    return render(request, 'fla_loja/edit_employee.html', {'form': form, 'employee': employee})
-
-
-@api_view(['GET', 'POST'])
-def delete_employee(request, id):
-    employee = get_object_or_404(Employee, id=id)
-    
-    if request.method == 'POST':
-        employee.delete()
-        return redirect('fla_loja:employees')
-    
-    return render(
-        request, 
-        'fla_loja/confirm_delete.html', 
-        {
-            'type': 'Vendedor',
-            'employee': employee,
-            'is_employee': 1
-            
-        }
-    )
-
-
-@api_view(['GET', 'POST'])
-def create_employee(request):
-    if request.method == 'GET':
-        return render(request, "fla_loja/create_employee.html")
-
-    if request.method == 'POST':
-        new_employee = request.data.copy()
-
-        # Remova o csrfmiddlewaretoken
-        if 'csrfmiddlewaretoken' in new_employee:
-            del new_employee['csrfmiddlewaretoken']
-
-        # Verificação manual para salário e número de vendas
-        salary = float(new_employee.get('wage', 0))
-        number_of_sales = int(new_employee.get('sales_count', 0))
-
-        errors = False
-        if salary < 0:
-            messages.error(request, "Salário não pode ser negativo.")
-            errors = True
-
-        if number_of_sales < 0:
-            messages.error(request, "Quantidade de vendas não pode ser negativa.")
-            errors = True
-
-        # Verificação para fotos duplicadas
-        photo = new_employee.get('photo')
-        if Employee.objects.filter(photo=photo).exists():
-            messages.error(request, "Já existe um funcionário com esta foto.")
-            errors = True
-
-        if errors:
-            return render(request, "fla_loja/create_employee.html", {"form": EmployeeForm()})
-        
-        
-        # Se tudo estiver correto, salvar o funcionário
-        serializer = EmployeeSerializer(data=new_employee)
-        if serializer.is_valid():
-            serializer.save()
-            return redirect('/employees/')
-
-        print(serializer.errors)
-        return Response(status=status.HTTP_400_BAD_REQUEST)
-
 
 # +++++++++++++++++++++++++++++++++++++  Products  +++++++++++++++++++++++++++++++++++++
 @api_view(['GET', 'POST'])
@@ -609,17 +453,19 @@ def sales(request):
 
 
 @api_view(['GET', 'POST'])
-def sale(request, product_id):
+def individual_sale(request, product_id):
     product = get_object_or_404(Product, id=product_id)
 
     if request.method == "POST":
-        client_id = request.POST.get("client_id")
+        client_id = request.session.get('id')
         employee_id = request.POST.get("employee_id")
-        date_purchased = request.POST.get("date_purchased")
         quantity = int(request.POST.get("quantity"))
+        payment_method = request.POST.get("payment_method")
+        date_purchased = datetime.today().strftime('%Y-%m-%d')
+        status = 'Pagamento pendente'
 
-        client = Client.objects.filter(id=client_id).first()
-        employee = Employee.objects.filter(id=employee_id).first()
+        client = Client.objects.get(pk=client_id)
+        employee = Employee.objects.get(pk=employee_id)
         
         errors = False
         if not client or not employee:
@@ -644,21 +490,29 @@ def sale(request, product_id):
             return render(request, 'fla_loja/sale.html', {'product': product})
         
         
-        Sale.objects.create(
+        Car.objects.create(
             id_client=client,
-            id_product=product,
             id_employee=employee,
             data=parsed_date,
+            status=status,
+            payment_method=payment_method
+        )
+        
+        last_car = Car.objects.last()
+
+        PurchasesCompleted.objects.create(
+            id_car=last_car,
+            id_product=product,
             quantity=quantity
         )
 
         product.quantity_in_stock -= quantity
         product.save()
 
-        employee.sales_count += 1
+        employee.sales_count += (quantity * product.price)
         employee.save()
 
-        return redirect('fla_loja:sales')
+        return redirect('fla_loja:index')
     
     return render(
         request, 
@@ -669,7 +523,7 @@ def sale(request, product_id):
             'product': product
         }
     )
-  
+
 
 @api_view(['GET', 'POST', 'DELETE'])
 def delete_sale(request, _id):
@@ -718,6 +572,148 @@ def edit_sale(request, _id):
     
     return render(request, 'fla_loja/edit_sale.html', { 'form': form, 'sale': sale })
 
+
+def add_to_car(request, _product_id):
+    if request.method == 'GET':
+        product = Product.objects.get(pk=_product_id)
+        return render(
+            request, 
+            "fla_loja/add_to_car.html",
+            {
+                'isLogged': request.session.get('isLogged', False),
+                'isEmployee': request.session.get('isEmployee', False),
+                'product': product
+            }
+        )
+    
+    
+    if request.method == 'POST':
+        car = Car.objects.get(id_client=request.session.get('id'), status='Carrinho atual')
+        product = Product.objects.get(pk=_product_id)
+        
+        quantity = int(request.POST.get("quantity"))
+        
+        PurchasesNotCompleted.objects.create(
+                id_car=car,
+                id_product=product,
+                quantity=quantity
+            )
+
+        return redirect('/')
+
+
+def buy_car(request):
+    if request.method == 'GET':
+        return render(
+            request, 
+            "fla_loja/buy_car.html",
+            {
+                'isLogged': request.session.get('isLogged', False),
+                'isEmployee': request.session.get('isEmployee', False),
+            }
+        )
+        
+    if request.method == 'POST':
+        car = Car.objects.get(id_client=request.session.get('id'), status='Carrinho atual')
+        
+        employee = Employee.objects.get(pk=request.POST['employee_id'])
+        payment_method = request.POST['payment_method']
+        
+        purchasesNotCompleted = PurchasesNotCompleted.objects.all()
+    
+        total_price = 0
+        for purchase in purchasesNotCompleted:
+            if(purchase.id_car.id == car.id):
+                product = Product.objects.get(pk=purchase.id_product.id)
+                product.quantity_in_stock -= purchase.quantity
+                product.save()
+                PurchasesCompleted.objects.create(
+                    id_car=car,
+                    id_product=product,
+                    quantity=purchase.quantity
+                )
+                
+                price_per_purchase = product.price * purchase.quantity
+                total_price += price_per_purchase
+                
+                purchase.delete()
+                
+                
+        employee.sales_count += total_price
+        employee.save()
+        
+        car.id_employee = employee
+        car.payment_method = payment_method
+        car.date = datetime.today().strftime('%Y-%m-%d')
+        car.status = "Pagamento pendente"
+        car.save()
+        
+        Car.objects.create(
+            id_client=Client.objects.get(pk=request.session.get('id')),
+            status='Carrinho atual',
+            date=datetime.today().strftime('%Y-%m-%d')
+        )
+
+        return redirect('fla_loja:index')
+    
+
+def mycar(request):
+    car = Car.objects.get(id_client=request.session.get('id'), status='Carrinho atual')
+    purchasesNotCompleted = PurchasesNotCompleted.objects.all()
+    
+    mc = []
+    total_price = 0
+    for purchase in purchasesNotCompleted:
+        if(purchase.id_car.id == car.id):
+            product = Product.objects.get(pk=purchase.id_product.id)
+            price_per_purchase = product.price * purchase.quantity
+            total_price += price_per_purchase
+            mc.append(
+                {
+                    'id': purchase.id_product.id,
+                    'image': product.image.url if product.image else None,
+                    'name': product.name,
+                    'quantity': purchase.quantity,
+                    'price_per_purchase': price_per_purchase,
+                }
+            )
+    
+    context = {
+        'isLogged': request.session.get('isLogged', False),
+        'isEmployee': request.session.get('isEmployee', False),
+        'car': mc,
+        'total_price': total_price
+    }
+    
+    return render(request, 'fla_loja/mycar.html', context)
+
+
+def my_orders(request):
+    cars = Car.objects.filter(id_client=request.session.get('id'))
+    purchasesCompleted = PurchasesCompleted.objects.all()
+    
+    purshased_products = []
+    for purchase in purchasesCompleted:
+        for car in cars:
+            if(purchase.id_car.id == car.id):
+                product = Product.objects.get(pk=purchase.id_product.id)
+                purshased_products.append(
+                    {
+                        'name': product.name,
+                        'quantity': purchase.quantity,
+                        'price': product.price,
+                        'image': product.image.url if product.image else None,
+                    }
+                )
+    
+    context = {
+        'isLogged': request.session.get('isLogged', False),
+        'isEmployee': request.session.get('isEmployee', False),
+        'purshased_products': purshased_products,
+    }
+    
+    return render(request, 'fla_loja/my_orders.html', context)
+    
 # +++++++++++++++++++++++++++++++++++++  Estoque  +++++++++++++++++++++++++++++++++++++
 @api_view(['GET'])
 def stock(request):
@@ -737,6 +733,8 @@ def stock(request):
         })
     
     context = {
+        'isLogged': request.session.get('isLogged', False),
+        'isEmployee': request.session.get('isEmployee', False),
         'stock_data': stock_data
     }
     

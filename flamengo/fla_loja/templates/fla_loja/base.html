@@ -54,8 +54,8 @@
                   <li><a class="dropdown-item" href="#" style="color: red;">Minhas vendas</a></li>
                 {% else %}
                   <li><a class="dropdown-item" href="{% url 'fla_loja:client_detail_autoview' %}" style="color: red;">Meus dados</a></li>
-                  <li><a class="dropdown-item" href="#" style="color: red;">Minhas compras</a></li>
-                  <li><a class="dropdown-item" href="#" style="color: red;">Meu carrinho</a></li>
+                  <li><a class="dropdown-item" href="{% url 'fla_loja:my_orders' %}" style="color: red;">Minhas compras</a></li>
+                  <li><a class="dropdown-item" href="{% url 'fla_loja:mycar' %}" style="color: red;">Meu carrinho</a></li>
                   <li><hr class="dropdown-divider"></li>
                 {% endif %}
                   <li><a class="dropdown-item" href="{% url 'fla_loja:logout' %}" style="color: red;">Sair</a></li>

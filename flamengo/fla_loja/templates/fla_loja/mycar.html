@@ -1,0 +1,49 @@
+{% extends 'fla_loja/base.html' %}
+
+{% block content %}
+<main class="main main--stock" style="padding: 20px; margin-bottom: 14rem;">
+
+  <div class="table-responsive" style="margin-top: 3rem;">
+    <table class="table table-bordered table-striped">
+      <thead class="table-dark" style="background-color: black; color: red;">
+        <tr>
+          <th scope="col">Foto do Produto</th>
+          <th scope="col">Nome do Produto</th>
+          <th scope="col">Unidades</th>
+          <th scope="col">Preço pelas unidades</th>
+          <th scope="col">Ação</th> <!-- Nova coluna para o botão -->
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in car %}
+        <tr>
+          <td>
+            {% if product.image %}
+              <img src="{{ product.image }}" alt="{{ product.name }}" style="max-width: 100px;">
+            {% else %}
+              <span>N/A</span>
+            {% endif %}
+          </td>
+          <td>{{ product.name }}</td>
+          <td>{{ product.quantity }}</td>
+          <td>R${{ product.price_per_purchase }}</td>
+          <td>
+            <a href="{% url 'fla_loja:product' product.id %}" class="btn btn-primary">Acessar</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5">Nenhum produto disponível.</td> <!-- Atualize a coluna colspan para 5 -->
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div style="display: flex; flex-direction: row; margin-top: 2rem;">
+      <h3 style="margin-right: 2rem;">Preço total da compra: {{total_price}}</h3>
+      <td>
+        <a href="{% url 'fla_loja:buy_car'%}" class="btn btn-primary">Comprar</a>
+      </td>
+    </div>
+  </div>
+</main>
+{% endblock %}

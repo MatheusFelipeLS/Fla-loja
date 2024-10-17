@@ -21,7 +21,10 @@
         {% endif %}
 
         {% if isLogged %}
-          <a href="{% url 'fla_loja:sale' product.id %}" class="btn btn-primary" style="margin-top: 10px;">Comprar</a>
+          <div>
+            <a href="{% url 'fla_loja:individual_sale' product.id %}" class="btn btn-primary" style="margin-top: 10px; margin-right: 10px;">Comprar</a>
+            <a href="{% url 'fla_loja:add_to_car' product.id %}" class="btn btn-primary" style="margin-top: 10px;">Adicionar ao carrinho</a>
+          </div>
         {% else %}
           <a href="{% url 'fla_loja:sign_in' %}" class="btn btn-primary" style="margin-top: 10px;">Comprar</a>
         {% endif %}
@@ -50,7 +53,7 @@
               {{ product.name }}
             </h2>
             <p>{{ product.description }}</p>
-            <p>{{ product.made_in }}</p>
+            <p>Fabricado em: {{ product.made_in }}</p>
             <p>Preço: R${{ product.price }} </p>
             <p>Em estoque: {{ product.quantity_in_stock }} un.</p>
           </article>
