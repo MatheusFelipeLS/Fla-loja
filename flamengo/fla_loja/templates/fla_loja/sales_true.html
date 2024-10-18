@@ -10,7 +10,7 @@
     <table class="table table-bordered table-striped">
       <thead class="table-dark" style="background-color: black; color: red;">
         <tr>
-          <th scope="col">ID do produto</th> <!-- Coluna para o ID da venda -->
+          <th scope="col">ID da Venda</th> <!-- Coluna para o ID da venda -->
           <th scope="col">Nome do Cliente</th>
           <th scope="col">Nome do Produto</th>
           <th scope="col">Quantidade</th>
@@ -22,7 +22,7 @@
         </tr>
       </thead>
       <tbody>
-        {% for purshase in grouped_pursharse %}
+        {% for sale in sales_data %}
         <tr>
           <td>{{ sale.id }}</td> <!-- Exibe o ID da venda -->
           <td>{{ sale.client_name }}</td>
