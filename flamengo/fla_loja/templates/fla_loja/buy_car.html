@@ -5,7 +5,7 @@
 <div style="display: flex; flex-direction: column;">
   <h1 style="margin-top: 2rem; margin-bottom: 3rem;">Comprar Produto</h1>
 
-  <form method="post" action="{% url 'fla_loja:buy_car' %}">
+  <form method="post" action="{% url 'fla_loja:buycar' %}">
       {% csrf_token %}
       <div class="form-group" style="margin-bottom: 2rem;">
         <label for="employee_id">ID do Vendedor:</label>

@@ -210,12 +210,6 @@ def employee_detail_autoview(request):
         }
     )
 
-
-@api_view(['GET'])
-def employee_detail(request, id):
-    employee = get_object_or_404(Employee, id=id)
-    return render(request, 'fla_loja/employee_detail.html', {'employee': employee})
-
 # +++++++++++++++++++++++++++++++++++++  Products  +++++++++++++++++++++++++++++++++++++
 @api_view(['GET', 'POST'])
 def product_detail(request, _id):
@@ -573,7 +567,7 @@ def edit_sale(request, _id):
     return render(request, 'fla_loja/edit_sale.html', { 'form': form, 'sale': sale })
 
 
-def add_to_car(request, _product_id):
+def addtocar(request, _product_id):
     if request.method == 'GET':
         product = Product.objects.get(pk=_product_id)
         return render(
@@ -602,7 +596,7 @@ def add_to_car(request, _product_id):
         return redirect('/')
 
 
-def buy_car(request):
+def buycar(request):
     if request.method == 'GET':
         return render(
             request, 
@@ -657,6 +651,15 @@ def buy_car(request):
         return redirect('fla_loja:index')
     
 
+def paycar(request, _id_car):
+    car = Car.objects.get(pk=_id_car)
+    
+    car.status = 'Compra finalizada'
+    car.save()
+    
+    return redirect('fla_loja:myorders')
+
+
 def mycar(request):
     car = Car.objects.get(id_client=request.session.get('id'), status='Carrinho atual')
     purchasesNotCompleted = PurchasesNotCompleted.objects.all()
@@ -688,7 +691,7 @@ def mycar(request):
     return render(request, 'fla_loja/mycar.html', context)
 
 
-def my_orders(request):
+def myorders(request):
     cars = Car.objects.filter(id_client=request.session.get('id'))
     purchasesCompleted = PurchasesCompleted.objects.all()
     
@@ -699,10 +702,12 @@ def my_orders(request):
                 product = Product.objects.get(pk=purchase.id_product.id)
                 purshased_products.append(
                     {
+                        'id': car.id,
                         'name': product.name,
                         'quantity': purchase.quantity,
                         'price': product.price,
                         'image': product.image.url if product.image else None,
+                        'status': car.status
                     }
                 )
     
@@ -710,6 +715,38 @@ def my_orders(request):
         'isLogged': request.session.get('isLogged', False),
         'isEmployee': request.session.get('isEmployee', False),
         'purshased_products': purshased_products,
+    }
+    
+    return render(request, 'fla_loja/my_orders.html', context)
+
+
+def my_sales(request):
+    cars = Car.objects.filter(id_employee=request.session.get('id'))
+    purchasesCompleted = PurchasesCompleted.objects.all()
+    
+    purshased_products = []
+    total_sales = 0
+    for purchase in purchasesCompleted:
+        for car in cars:
+            if(purchase.id_car.id == car.id and car.status != 'Pagamento pendente'):
+                product = Product.objects.get(pk=purchase.id_product.id)
+                total_sales += purchase.quantity * product.price
+                purshased_products.append(
+                    {
+                        'id': car.id,
+                        'name': product.name,
+                        'quantity': purchase.quantity,
+                        'price': product.price,
+                        'image': product.image.url if product.image else None,
+                        'status': car.status
+                    }
+                )
+    
+    context = {
+        'isLogged': request.session.get('isLogged', False),
+        'isEmployee': request.session.get('isEmployee', False),
+        'purshased_products': purshased_products,
+        'total_sales': total_sales
     }
     
     return render(request, 'fla_loja/my_orders.html', context)

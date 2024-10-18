@@ -23,7 +23,7 @@
         {% if isLogged %}
           <div>
             <a href="{% url 'fla_loja:individual_sale' product.id %}" class="btn btn-primary" style="margin-top: 10px; margin-right: 10px;">Comprar</a>
-            <a href="{% url 'fla_loja:add_to_car' product.id %}" class="btn btn-primary" style="margin-top: 10px;">Adicionar ao carrinho</a>
+            <a href="{% url 'fla_loja:addtocar' product.id %}" class="btn btn-primary" style="margin-top: 10px;">Adicionar ao carrinho</a>
           </div>
         {% else %}
           <a href="{% url 'fla_loja:sign_in' %}" class="btn btn-primary" style="margin-top: 10px;">Comprar</a>

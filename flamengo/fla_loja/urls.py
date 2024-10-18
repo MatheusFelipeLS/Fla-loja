@@ -32,10 +32,16 @@ urlpatterns = [
     path('client/<int:id>/delete/', views.delete_client, name='delete_client'),
 
 
-    # +++++++++++++++++++++++++++  Vendedores  +++++++++++++++++++++++++++
-    path('employee/<int:id>/', views.employee_detail, name='employee_detail'),
-    path('employee/', views.employee_detail_autoview, name='employee_detail_autoview'),
+    # +++++++++++++++++++++++++++  Car  +++++++++++++++++++++++++++
+    path('car/', views.mycar, name='mycar'),
+    path('myorders/', views.myorders, name='myorders'),
+    path('addtocar/<int:_product_id>/', views.addtocar, name='addtocar'),
+    path('buycar/', views.buycar, name='buycar'),
+    path('paycar/<int:_id_car>', views.paycar, name='paycar'),
 
+    # +++++++++++++++++++++++++++  Vendedores  +++++++++++++++++++++++++++
+    path('employee/', views.employee_detail_autoview, name='employee_detail_autoview'),
+    path('my_sales/', views.my_sales, name='my_sales'),
 
     # +++++++++++++++++++++++++++  Vendas  +++++++++++++++++++++++++++
     path('sales/', views.sales, name='sales'),
@@ -43,11 +49,6 @@ urlpatterns = [
     path('delete_sale/<int:_id>/', views.delete_sale, name='delete_sale'),
     path('edit_sale/<int:_id>/', views.edit_sale, name='edit_sale'),
 
-
-    path('car/', views.mycar, name='mycar'),
-    path('my_orders/', views.my_orders, name='my_orders'),
-    path('add_to_car/<int:_product_id>/', views.add_to_car, name='add_to_car'),
-    path('buy_car/', views.buy_car, name='buy_car'),
     # +++++++++++++++++++++++++++  Estoque  +++++++++++++++++++++++++++
     path('stock/', views.stock, name='stock'),
     

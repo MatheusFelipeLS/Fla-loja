@@ -34,13 +34,10 @@
           {% endif %}
           
           
-          <div class="input-group mb-0.5" style="margin-left: 3rem; margin-right: 2rem;">
-            <button style="color: red;" class="btn btn-outline-danger dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"></button>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="{% url 'fla_loja:filter_products' %}">Filtrar produtos</a></li>
-            </ul>
-            <input type="text" class="form-control" aria-label="Text input with dropdown button">
-            <button class="btn btn-outline-danger" style="color: red;" type="submit">Pesquisar</button>
+          <div class="input-group mb-0.5" style="margin-left: 2rem; margin-right: 2rem;">
+            <button style="color: red;" class="btn btn-outline-danger">
+              <a style="color: red; text-decoration: none;" href="{% url 'fla_loja:filter_products' %}">Filtrar produtos</a>
+            </button>
           </div>
 
           {% if isLogged %}
@@ -51,10 +48,10 @@
               <ul class="dropdown-menu">
                 {% if isEmployee %} 
                   <li><a class="dropdown-item" href="{% url 'fla_loja:employee_detail_autoview' %}" style="color: red;">Meus dados</a></li>
-                  <li><a class="dropdown-item" href="#" style="color: red;">Minhas vendas</a></li>
+                  <li><a class="dropdown-item" href="{% url 'fla_loja:my_sales' %}" style="color: red;">Minhas vendas</a></li>
                 {% else %}
                   <li><a class="dropdown-item" href="{% url 'fla_loja:client_detail_autoview' %}" style="color: red;">Meus dados</a></li>
-                  <li><a class="dropdown-item" href="{% url 'fla_loja:my_orders' %}" style="color: red;">Minhas compras</a></li>
+                  <li><a class="dropdown-item" href="{% url 'fla_loja:myorders' %}" style="color: red;">Minhas compras</a></li>
                   <li><a class="dropdown-item" href="{% url 'fla_loja:mycar' %}" style="color: red;">Meu carrinho</a></li>
                   <li><hr class="dropdown-divider"></li>
                 {% endif %}

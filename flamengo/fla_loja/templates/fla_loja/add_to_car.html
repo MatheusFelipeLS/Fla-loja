@@ -5,7 +5,7 @@
 <div style="display: flex; flex-direction: column; margin-bottom: 5rem;">
   <h1 style="margin-top: 2rem; margin-bottom: 2rem;">Adicionar ao carrinho</h1>
 
-  <form method="post" action="{% url 'fla_loja:add_to_car' product.id %}">
+  <form method="post" action="{% url 'fla_loja:addtocar' product.id %}">
       {% csrf_token %}
       <div class="form-group" style="margin-top: 1rem; margin-bottom: 2rem;">
         <label for="quantity">Quantidade:</label>

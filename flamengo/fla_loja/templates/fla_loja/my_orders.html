@@ -7,26 +7,38 @@
     <table class="table table-bordered table-striped">
       <thead class="table-dark" style="background-color: black; color: red;">
         <tr>
+          <th scope="col">ID da compra</th>
           <th scope="col">Foto do Produto</th>
           <th scope="col">Nome do Produto</th>
           <th scope="col">Unidades</th>
           <th scope="col">Preço pelas unidades</th>
+          {% if not isEmployee %}
+          <th scope="col">Status</th>
+          {% endif  %}
         </tr>
       </thead>
       <tbody>
-        {% for product in purshased_products %}
+        {% for purshase in purshased_products %}
         <tr>
+          <td>{{ purshase.id }}</td>
           <td>
-            {% if product.image %}
-              <img src="{{ product.image }}" alt="{{ product.name }}" style="max-width: 100px;">
+            {% if purshase.image %}
+              <img src="{{ purshase.image }}" alt="{{ purshase.name }}" style="max-width: 100px;">
             {% else %}
               <span>N/A</span>
             {% endif %}
           </td>
-          <td>{{ product.name }}</td>
-          <td>R$ {{ product.price }} por unidade</td>
-          <td>{{ product.quantity }}</td>
-        </tr>
+          <td>{{ purshase.name }}</td>
+          <td>R$ {{ purshase.price }} por unidade</td>
+          <td>{{ purshase.quantity }}</td>
+          {% if not isEmployee %}
+            {% if purshase.status == 'Pagamento pendente' %}
+              <td><a href="{% url 'fla_loja:paycar' purshase.id %}" class="btn btn-primary">Pagar</a></td>
+            {% else %}
+              <td>{{ purshase.status }}</td>
+            {% endif %}
+          {% endif %}
+          </tr>
         {% empty %}
         <tr>
           <td colspan="5">Nenhum produto disponível.</td> <!-- Atualize a coluna colspan para 5 -->
@@ -34,6 +46,9 @@
         {% endfor %}
       </tbody>
     </table>
+    {% if isEmployee %}
+    <h4 style="margin-top: 3rem;">O total em vendas foi R$ {{total_sales}}</h4>
+    {% endif %}
   </div>
 </main>
 {% endblock %}
