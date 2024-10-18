@@ -503,6 +503,20 @@ def buycar(request):
         
         purchasesNotCompleted = PurchasesNotCompleted.objects.all()
     
+        errors = False
+        for purchase in purchasesNotCompleted:
+            if(purchase.id_car.id == car.id):
+                product = Product.objects.get(pk=purchase.id_product.id)
+                if(product.quantity_in_stock - purchase.quantity <= 0):
+                    messages.error(request, "Quantidade solicitada excede o estoque disponível.")
+                    errors = True 
+                    break
+        
+        
+        if errors:
+            return redirect('fla_loja:mycar')
+            
+                
         total_price = 0
         for purchase in purchasesNotCompleted:
             if(purchase.id_car.id == car.id):
