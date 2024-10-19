@@ -3,52 +3,73 @@
 {% block content %}
 <main class="main main--stock" style="padding: 20px; margin-bottom: 14rem;">
 
-  <div class="table-responsive" style="margin-top: 3rem;">
-    {% if isEmployee %}
-    <h4 style="margin-bottom: 3rem;">O total em vendas foi R$ {{total_sales}}</h4>
-    {% endif %}
-    <table class="table table-bordered table-striped">
-      <thead class="table-dark" style="background-color: black; color: red;">
-        <tr>
-          <th scope="col">ID da compra</th>
-          <th scope="col">Foto do Produto</th>
-          <th scope="col">Nome do Produto</th>
-          <th scope="col">Preço pelas unidades</th>
-          <th scope="col">Unidades</th>
-          {% if not isEmployee %}
-          <th scope="col">Status</th>
-          {% endif  %}
-        </tr>
-      </thead>
-      <tbody>
-        {% for purshase in purshased_products %}
-        <tr>
-          <td>{{ purshase.id }}</td>
-          <td>
-            {% if purshase.image %}
-              <img src="{{ purshase.image }}" alt="{{ purshase.name }}" style="max-width: 100px;">
-            {% else %}
-              <span>N/A</span>
-            {% endif %}
-          </td>
-          <td>{{ purshase.name }}</td>
-          <td>R$ {{ purshase.price }} por unidade</td>
-          <td>{{ purshase.quantity }}</td>
-          {% if not isEmployee %}
-            {% if purshase.status == 'Pagamento pendente' %}
-              <td><a href="{% url 'fla_loja:paycar' purshase.id %}" class="btn btn-primary">Pagar</a></td>
-            {% else %}
-              <td>{{ purshase.status }}</td>
-            {% endif %}
-          {% endif %}
-          </tr>
-        {% empty %}
-        <tr>
-          <td colspan="5">Nenhum produto disponível.</td> <!-- Atualize a coluna colspan para 5 -->
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+    <div class="filter-form" style="margin-bottom: 2rem;">
+        <form method="GET" action="{% url 'fla_loja:my_sales' %}">
+            <label for="month">Mês:</label>
+            <select name="month">
+                <option value="">Todos</option>  <!-- Opção para mostrar todos os meses -->
+                {% for month in months %}
+                    <option value="{{ month }}"{% if month == request.GET.month|default:'' %} selected{% endif %}>{{ month }}</option>
+                {% endfor %}
+            </select>
+
+            <label for="year">Ano:</label>
+            <select name="year">
+                <option value="">Todos</option>  <!-- Opção para mostrar todos os anos -->
+                {% for year in years %}
+                    <option value="{{ year }}"{% if year == request.GET.year|default:'' %} selected{% endif %}>{{ year }}</option>
+                {% endfor %}
+            </select>
+
+            <button type="submit">Filtrar</button>
+        </form>
+    </div>
+
+    <div class="table-responsive" style="margin-top: 3rem;">
+        {% if isEmployee %}
+            <h4 style="margin-bottom: 1rem;">O total em vendas foi R$ {{ total_sales }}</h4>
+            <h5 style="margin-bottom: 3rem;">Quantidade de produtos vendidos: {{ total_quantity }}</h5>
+        {% endif %}
+        <table class="table table-bordered table-striped">
+            <thead class="table-dark" style="background-color: black; color: red;">
+                <tr>
+                    <th scope="col">Foto do Produto</th>
+                    <th scope="col">Nome do Produto</th>
+                    <th scope="col">Preço por unidade</th>
+                    <th scope="col">Unidades</th>
+                    {% if not isEmployee %}
+                        <th scope="col">Status</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for purchase in purchased_products %}
+                <tr>
+                    <td>
+                        {% if purchase.image %}
+                            <img src="{{ purchase.image }}" alt="{{ purchase.name }}" style="max-width: 100px;">
+                        {% else %}
+                            <span>N/A</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ purchase.name }}</td>
+                    <td>R$ {{ purchase.price }} por unidade</td>
+                    <td>{{ purchase.quantity }}</td>
+                    {% if not isEmployee %}
+                        {% if purchase.status == 'Pagamento pendente' %}
+                            <td><a href="{% url 'fla_loja:paycar' purchase.id %}" class="btn btn-primary">Pagar</a></td>
+                        {% else %}
+                            <td>{{ purchase.status }}</td>
+                        {% endif %}
+                    {% endif %}
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">Nenhum produto disponível.</td> <!-- Atualize a coluna colspan para 6 -->
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </main>
 {% endblock %}

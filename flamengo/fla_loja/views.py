@@ -17,6 +17,12 @@ from .models import *
 from .serializer import *
 from .forms import *
 
+CUPONS = {
+    "FLAMENGO": 0.10,
+    "ONEPIECE": 0.10,
+    "SOUSA": 0.10
+}
+
 @api_view(['GET', 'POST'])
 def index(request):
     all_products = Product.objects.all()
@@ -397,33 +403,48 @@ def delete_client(request, id):
 # +++++++++++++++++++++++++++++++++++++  Car  +++++++++++++++++++++++++++++++++++++
 def mycar(request):
     car = Car.objects.get(id_client=request.session.get('id'), status='Carrinho atual')
-    purchasesNotCompleted = PurchasesNotCompleted.objects.all()
     
-    mc = []
+    # Verificar se há um pedido de remoção
+    if request.method == 'POST':
+        product_id = request.POST.get('remove_product_id')
+        PurchasesNotCompleted.objects.filter(id_car=car.id, id_product=product_id).delete()
+        return redirect('fla_loja:mycar')
+
+    purchasesNotCompleted = PurchasesNotCompleted.objects.filter(id_car=car.id)
+    
+    product_map = {}
     total_price = 0
-    for purchase in purchasesNotCompleted:
-        if(purchase.id_car.id == car.id):
-            product = Product.objects.get(pk=purchase.id_product.id)
-            price_per_purchase = product.price * purchase.quantity
-            total_price += price_per_purchase
-            mc.append(
-                {
-                    'id': purchase.id_product.id,
-                    'image': product.image.url if product.image else None,
-                    'name': product.name,
-                    'quantity': purchase.quantity,
-                    'price_per_purchase': price_per_purchase,
-                }
-            )
     
+    for purchase in purchasesNotCompleted:
+        product = Product.objects.get(pk=purchase.id_product.id)
+        price_per_purchase = product.price * purchase.quantity
+
+        # Verifica se o produto já está no dicionário
+        if product.id in product_map:
+            product_map[product.id]['quantity'] += purchase.quantity
+            product_map[product.id]['price_per_purchase'] += price_per_purchase
+        else:
+            product_map[product.id] = {
+                'id': product.id,
+                'image': product.image.url if product.image else None,
+                'name': product.name,
+                'quantity': purchase.quantity,
+                'price_per_purchase': price_per_purchase,
+            }
+        
+        total_price += price_per_purchase
+
     context = {
         'isLogged': request.session.get('isLogged', False),
         'isEmployee': request.session.get('isEmployee', False),
-        'car': mc,
+        'car': product_map.values(),  # Apenas os valores do dicionário
         'total_price': total_price
     }
     
     return render(request, 'fla_loja/mycar.html', context)
+
+
+
 
 
 def myorders(request):
@@ -500,6 +521,7 @@ def buycar(request):
         
         employee = Employee.objects.get(pk=request.POST['employee_id'])
         payment_method = request.POST['payment_method']
+        cupom = request.POST.get('cupom', '').upper().strip()
         
         purchasesNotCompleted = PurchasesNotCompleted.objects.all()
     
@@ -512,7 +534,14 @@ def buycar(request):
                     errors = True 
                     break
         
-        
+        if cupom:
+            if cupom in CUPONS:
+                discount = CUPONS[cupom]
+                total_price *= (1 - discount)
+            else:
+                messages.error(request, "Cupom inválido.")  
+                errors = True
+
         if errors:
             return redirect('fla_loja:mycar')
             
@@ -533,7 +562,10 @@ def buycar(request):
                 total_price += price_per_purchase
                 
                 purchase.delete()
-                
+        
+        print("Cupom: ", cupom)
+
+
                 
         employee.sales_count += total_price
         employee.save()
@@ -578,35 +610,98 @@ def employee_detail_autoview(request):
 
 
 def my_sales(request):
+    # Obtenha os parâmetros de filtragem do request
+    selected_month = request.GET.get('month')
+    selected_year = request.GET.get('year')
+
+    # Filtrar os registros de vendas
     cars = Car.objects.filter(id_employee=request.session.get('id'))
     purchasesCompleted = PurchasesCompleted.objects.all()
-    
-    purshased_products = []
+
+    # Dicionário para armazenar produtos agrupados
+    purchased_products_dict = {}
     total_sales = 0
+    total_quantity = 0  # Variável para armazenar a quantidade total de produtos vendidos
+
     for purchase in purchasesCompleted:
         for car in cars:
-            if(purchase.id_car.id == car.id and car.status != 'Pagamento pendente'):
+            # Verifique se a venda é do funcionário e se o status não é 'Pagamento pendente'
+            if purchase.id_car.id == car.id and car.status != 'Pagamento pendente':
                 product = Product.objects.get(pk=purchase.id_product.id)
-                total_sales += purchase.quantity * product.price
-                purshased_products.append(
-                    {
-                        'id': car.id,
-                        'name': product.name,
-                        'quantity': purchase.quantity,
-                        'price': product.price,
-                        'image': product.image.url if product.image else None,
-                        'status': car.status
-                    }
-                )
-    
+                sale_date = car.date
+
+                # Filtrar por mês e ano, se selecionados
+                if (not selected_month or sale_date.month == int(selected_month)) and \
+                   (not selected_year or sale_date.year == int(selected_year)):
+                    total_sales += purchase.quantity * product.price
+                    total_quantity += purchase.quantity  # Atualize a quantidade total
+                    
+                    # Agrupar produtos pelo ID
+                    if product.id in purchased_products_dict:
+                        purchased_products_dict[product.id]['quantity'] += purchase.quantity
+                    else:
+                        purchased_products_dict[product.id] = {
+                            'name': product.name,
+                            'quantity': purchase.quantity,
+                            'price': product.price,
+                            'image': product.image.url if product.image else None,
+                            'status': car.status
+                        }
+
+    # Transformar dicionário em lista
+    purchased_products = [
+        {'id': product_id, **details}
+        for product_id, details in purchased_products_dict.items()
+    ]
+
     context = {
         'isLogged': request.session.get('isLogged', False),
         'isEmployee': request.session.get('isEmployee', False),
-        'purshased_products': purshased_products,
-        'total_sales': total_sales
+        'purchased_products': purchased_products,
+        'total_sales': total_sales,
+        'total_quantity': total_quantity,  # Adicione a quantidade total ao contexto
+        'months': range(1, 13),  # Adicione os meses disponíveis
+        'years': range(2020, datetime.today().year + 1),  # Ajuste conforme necessário
     }
-    
+
     return render(request, 'fla_loja/my_orders.html', context)
+
+
+
+
+
+
+
+# def my_sales(request):
+#     cars = Car.objects.filter(id_employee=request.session.get('id'))
+#     purchasesCompleted = PurchasesCompleted.objects.all()
+    
+#     purshased_products = []
+#     total_sales = 0
+#     for purchase in purchasesCompleted:
+#         for car in cars:
+#             if(purchase.id_car.id == car.id and car.status != 'Pagamento pendente'):
+#                 product = Product.objects.get(pk=purchase.id_product.id)
+#                 total_sales += purchase.quantity * product.price
+#                 purshased_products.append(
+#                     {
+#                         'id': car.id,
+#                         'name': product.name,
+#                         'quantity': purchase.quantity,
+#                         'price': product.price,
+#                         'image': product.image.url if product.image else None,
+#                         'status': car.status
+#                     }
+#                 )
+    
+#     context = {
+#         'isLogged': request.session.get('isLogged', False),
+#         'isEmployee': request.session.get('isEmployee', False),
+#         'purshased_products': purshased_products,
+#         'total_sales': total_sales
+#     }
+    
+#     return render(request, 'fla_loja/my_orders.html', context)
 
 
 # +++++++++++++++++++++++++++++++++++++  Sales  +++++++++++++++++++++++++++++++++++++
@@ -650,21 +745,62 @@ def sales_true(request):
 
 @api_view(['GET'])
 def sales(request):
-    grouped_pursharse = PurchasesCompleted.objects.values('id_product').annotate(total_quantity=Sum('quantity'))
-    
-    total_per_product = []
-    for compra in grouped_pursharse:
-        product = Product.objects.get(pk=compra['id_product'])
-        total_per_product.append(compra['quantity'] * product.price)
-        
+    # Obtenha os parâmetros de filtragem do request
+    selected_month = request.GET.get('month')
+    selected_year = request.GET.get('year')
+
+    # Obter todas as vendas completadas
+    cars = Car.objects.exclude(status='Pagamento pendente')  # Excluir os carrinhos com pagamento pendente
+    purchasesCompleted = PurchasesCompleted.objects.all()
+
+    # Dicionário para armazenar produtos agrupados
+    purchased_products_dict = {}
+    total_sales = 0
+    total_quantity_sold = 0  # Variável para armazenar o total de unidades vendidas
+
+    for purchase in purchasesCompleted:
+        for car in cars:
+            if purchase.id_car.id == car.id:
+                product = Product.objects.get(pk=purchase.id_product.id)
+                sale_date = car.date
+
+                # Filtrar por mês e ano, se selecionados
+                if (not selected_month or sale_date.month == int(selected_month)) and \
+                   (not selected_year or sale_date.year == int(selected_year)):
+                    total_sales += purchase.quantity * product.price
+                    total_quantity_sold += purchase.quantity  # Incrementa a quantidade de produtos vendidos
+                    
+                    # Agrupar produtos pelo ID
+                    if product.id in purchased_products_dict:
+                        purchased_products_dict[product.id]['quantity'] += purchase.quantity
+                    else:
+                        purchased_products_dict[product.id] = {
+                            'name': product.name,
+                            'quantity': purchase.quantity,
+                            'price': product.price,
+                            'image': product.image.url if product.image else None,
+                            'status': car.status
+                        }
+
+    # Transformar dicionário em lista
+    purchased_products = [
+        {'id': product_id, **details}
+        for product_id, details in purchased_products_dict.items()
+    ]
+
     context = {
         'isLogged': request.session.get('isLogged', False),
         'isEmployee': request.session.get('isEmployee', False),
-        'grouped_pursharse': grouped_pursharse,
-        'total_per_product': total_per_product 
+        'purchased_products': purchased_products,
+        'total_sales': total_sales,
+        'total_quantity_sold': total_quantity_sold,  # Adicionar ao contexto
+        'months': range(1, 13),  # Adicione os meses disponíveis
+        'years': range(2020, datetime.today().year + 1),  # Ajuste conforme necessário
     }
-    
+
     return render(request, 'fla_loja/sales.html', context)
+
+
 
 
 @api_view(['GET', 'POST'])
@@ -676,6 +812,7 @@ def individual_sale(request, product_id):
         employee_id = request.POST.get("employee_id")
         quantity = int(request.POST.get("quantity"))
         payment_method = request.POST.get("payment_method")
+        cupom = request.POST.get("cupom", "").upper().strip()
         date_purchased = datetime.today().strftime('%Y-%m-%d')
         status = 'Pagamento pendente'
 
@@ -691,7 +828,20 @@ def individual_sale(request, product_id):
         if quantity > product.quantity_in_stock:
             messages.error(request, "Quantidade solicitada excede o estoque disponível.")
             errors = True
-        
+
+        # Verificar se o cupom foi inserido
+        if cupom:
+            if cupom in CUPONS:
+                discount = CUPONS[cupom]
+            else:
+                print(cupom)
+                messages.error(request, "Cupom inválido.")
+                return render(request, 'fla_loja/sale.html', {'product': product})
+        else:
+            discount = 0
+
+        # Calcula o preço total com desconto (se houver)
+        total_price = quantity * product.price * (1 - discount)
         
         if errors:
             return render(request, 'fla_loja/sale.html', {'product': product})    
@@ -724,7 +874,7 @@ def individual_sale(request, product_id):
         product.quantity_in_stock -= quantity
         product.save()
 
-        employee.sales_count += (quantity * product.price)
+        employee.sales_count += total_price
         employee.save()
 
         return redirect('fla_loja:index')

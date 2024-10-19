@@ -1,59 +1,63 @@
 {% extends 'fla_loja/base.html' %}
 
 {% block content %}
-<main class="main main--sales" style="padding: 20px; flex-direction: column; display: flex;">
+<main class="main main--stock" style="padding: 20px; margin-bottom: 14rem;">
 
-  <div style="margin: 0 auto; padding-top: 3rem; padding-bottom: 3rem;">
-    <h1>RELATÓRIO DE VENDAS</h1>
-  </div>
-  <div class="table-responsive">
-    <table class="table table-bordered table-striped">
-      <thead class="table-dark" style="background-color: black; color: red;">
-        <tr>
-          <th scope="col">ID do produto</th> <!-- Coluna para o ID da venda -->
-          <th scope="col">Nome do Cliente</th>
-          <th scope="col">Nome do Produto</th>
-          <th scope="col">Quantidade</th>
-          <th scope="col">Preço Total</th>
-          <th scope="col">Nome do Vendedor</th> <!-- Nova coluna para o nome do vendedor -->
-          <th scope="col">Data da Compra</th> <!-- Nova coluna para a data da compra -->
-          <th scope="col"></th> <!-- Nova coluna para a data da compra -->
-          <th scope="col"></th> <!-- Nova coluna para a data da compra -->
-        </tr>
-      </thead>
-      <tbody>
-        {% for purshase in grouped_pursharse %}
-        <tr>
-          <td>{{ sale.id }}</td> <!-- Exibe o ID da venda -->
-          <td>{{ sale.client_name }}</td>
-          <td>{{ sale.product_name }}</td>
-          <td>{{ sale.quantity }}</td>
-          <td>R${{ sale.total_price }}</td>
-          <td>{{ sale.employee_name }}</td> <!-- Exibe o nome do vendedor -->
-          <td>{{ sale.date }}</td> <!-- Exibe a data da compra -->
-          <td>
-            <a href="{% url 'fla_loja:edit_sale' sale.id %}" style="text-decoration: none; color: black;">
-              <svg style="width: 15px; height: 15px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
-                <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
-                <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/>
-              </svg>
-            </a>
-          </td>
-          <td>
-            <a href="{% url 'fla_loja:delete_sale' sale.id %}" style="margin-left: 10px; text-decoration: none; color: rgb(247, 33, 33);">
-              <svg style="width: 15px; height: 15px;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3" viewBox="0 0 16 16">
-                <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"/>
-              </svg>
-            </a>
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="7">Nenhuma venda disponível.</td> <!-- Atualize a coluna colspan para 7 -->
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+    <div class="filter-form" style="margin-bottom: 2rem;">
+        <form method="GET" action="{% url 'fla_loja:sales' %}">
+            <label for="month">Mês:</label>
+            <select name="month">
+                <option value="">Todos</option>  <!-- Opção para mostrar todos os meses -->
+                {% for month in months %}
+                    <option value="{{ month }}"{% if month == request.GET.month|default:'' %} selected{% endif %}>{{ month }}</option>
+                {% endfor %}
+            </select>
+
+            <label for="year">Ano:</label>
+            <select name="year">
+                <option value="">Todos</option>  <!-- Opção para mostrar todos os anos -->
+                {% for year in years %}
+                    <option value="{{ year }}"{% if year == request.GET.year|default:'' %} selected{% endif %}>{{ year }}</option>
+                {% endfor %}
+            </select>
+
+            <button type="submit">Filtrar</button>
+        </form>
+    </div>
+
+    <div class="table-responsive" style="margin-top: 3rem;">
+        <h4 style="margin-bottom: 1rem;">O total em vendas foi R$ {{ total_sales }}</h4>
+        <h5 style="margin-bottom: 3rem;">Quantidade de produtos vendidos: {{ total_quantity_sold }}</h5>
+        <table class="table table-bordered table-striped">
+            <thead class="table-dark" style="background-color: black; color: red;">
+                <tr>
+                    <th scope="col">Foto do Produto</th>
+                    <th scope="col">Nome do Produto</th>
+                    <th scope="col">Preço por unidade</th>
+                    <th scope="col">Unidades</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for purchase in purchased_products %}
+                <tr>
+                    <td>
+                        {% if purchase.image %}
+                            <img src="{{ purchase.image }}" alt="{{ purchase.name }}" style="max-width: 100px;">
+                        {% else %}
+                            <span>N/A</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ purchase.name }}</td>
+                    <td>R$ {{ purchase.price }}</td>
+                    <td>{{ purchase.quantity }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">Nenhum produto disponível.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </main>
 {% endblock %}

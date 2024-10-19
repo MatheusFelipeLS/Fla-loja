@@ -11,7 +11,7 @@
           <th scope="col">Nome do Produto</th>
           <th scope="col">Unidades</th>
           <th scope="col">Preço pelas unidades</th>
-          <th scope="col">Ação</th> <!-- Nova coluna para o botão -->
+          <th scope="col">Ação</th>
         </tr>
       </thead>
       <tbody>
@@ -29,17 +29,23 @@
           <td>R${{ product.price_per_purchase }}</td>
           <td>
             <a href="{% url 'fla_loja:product' product.id %}" class="btn btn-primary">Acessar</a>
+            <!-- Formulário para remover o produto -->
+            <form method="POST" action="{% url 'fla_loja:mycar' %}" style="display:inline;">
+              {% csrf_token %}
+              <input type="hidden" name="remove_product_id" value="{{ product.id }}">
+              <button type="submit" class="btn btn-danger">Remover</button>
+            </form>
           </td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="5">Nenhum produto disponível.</td> <!-- Atualize a coluna colspan para 5 -->
+          <td colspan="5">Nenhum produto disponível.</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
     <div style="display: flex; flex-direction: row; margin-top: 2rem;">
-      <h3 style="margin-right: 2rem;">Preço total da compra: {{total_price}}</h3>
+      <h3 style="margin-right: 2rem;">Preço total da compra: R${{ total_price }}</h3>
       <td>
         <a href="{% url 'fla_loja:buycar'%}" class="btn btn-primary">Comprar</a>
       </td>
