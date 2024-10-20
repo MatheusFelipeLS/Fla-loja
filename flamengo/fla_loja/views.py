@@ -5,6 +5,7 @@ from django.contrib.auth import logout
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib import messages
 from django.utils.dateparse import parse_datetime
+from django.db import connection
 from django.db.models import Count
 
 from rest_framework.decorators import api_view
@@ -1072,4 +1073,10 @@ def popular_products(request):
             'total_compras': item['total_compras']
         })
 
-    return render(request, 'fla_loja/produtos_populares.html', {'all_products': produtos_populares})
+    context = {
+        'isLogged': request.session.get('isLogged', False),
+        'isEmployee': request.session.get('isEmployee', False),
+        'all_products': produtos_populares
+    }
+    
+    return render(request, 'fla_loja/produtos_populares.html', context)
