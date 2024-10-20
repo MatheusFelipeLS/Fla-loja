@@ -4,7 +4,7 @@
 <main class="main main--stock" style="padding: 20px; margin-bottom: 10rem;">
 <div style="display: flex; flex-direction: column;">
     <div class="filter-form" style="margin-bottom: 2rem;">
-        <form method="GET" action="{% url 'fla_loja:myorders' %}">
+        <form method="GET" action="{% url 'fla_loja:my_sales' %}">
             <label for="month">Mês:</label>
             <select name="month">
                 {% if selected_month %}

@@ -5,7 +5,6 @@ from django.contrib.auth import logout
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib import messages
 from django.utils.dateparse import parse_datetime
-from django.db.models import Sum
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -449,28 +448,66 @@ def mycar(request):
 
 def myorders(request):
     cars = Car.objects.filter(id_client=request.session.get('id'))
+    selected_month = request.GET.get('month')
+    selected_year = request.GET.get('year')
+    
     purchasesCompleted = PurchasesCompleted.objects.all()
     
-    purshased_products = []
+    # purchased_products = []
+    # for purchase in purchasesCompleted:
+    #     for car in cars:
+    #         if(purchase.id_car.id == car.id):
+    #             product = Product.objects.get(pk=purchase.id_product.id)
+    #             purchased_products.append(
+    #                 {
+    #                     'id': car.id,
+    #                     'name': product.name,
+    #                     'quantity': purchase.quantity,
+    #                     'price': product.price,
+    #                     'image': product.image.url if product.image else None,
+    #                     'status': car.status
+    #                 }
+    #             )
+                
+    purchased_products_dict = {}
+    
     for purchase in purchasesCompleted:
         for car in cars:
-            if(purchase.id_car.id == car.id):
+            # Verifique se a venda é do funcionário e se o status não é 'Pagamento pendente'
+            if purchase.id_car.id == car.id:
                 product = Product.objects.get(pk=purchase.id_product.id)
-                purshased_products.append(
-                    {
-                        'id': car.id,
-                        'name': product.name,
-                        'quantity': purchase.quantity,
-                        'price': product.price,
-                        'image': product.image.url if product.image else None,
-                        'status': car.status
-                    }
-                )
+                sale_date = car.date
+
+                # Filtrar por mês e ano, se selecionados
+                if (not selected_month or sale_date.month == int(selected_month)) and \
+                   (not selected_year or sale_date.year == int(selected_year)):
+                    
+                    # Agrupar produtos pelo ID
+                    if product.id in purchased_products_dict:
+                        purchased_products_dict[product.id]['quantity'] += purchase.quantity
+                    else:
+                        purchased_products_dict[product.id] = {
+                            'name': product.name,
+                            'quantity': purchase.quantity,
+                            'price': product.price,
+                            'image': product.image.url if product.image else None,
+                            'status': car.status
+                        }
+
+    # Transformar dicionário em lista
+    purchased_products = [
+        {'id': product_id, **details}
+        for product_id, details in purchased_products_dict.items()
+    ]
     
     context = {
         'isLogged': request.session.get('isLogged', False),
         'isEmployee': request.session.get('isEmployee', False),
-        'purshased_products': purshased_products,
+        'purchased_products': purchased_products,
+        'months': range(1, 13),  # Adicione os meses disponíveis
+        'years': range(2020, datetime.today().year + 1),  # Ajuste conforme necessário
+        'selected_month': selected_month,
+        'selected_year': selected_year
     }
     
     return render(request, 'fla_loja/my_orders.html', context)
@@ -573,7 +610,7 @@ def buycar(request):
         car.id_employee = employee
         car.payment_method = payment_method
         car.date = datetime.today().strftime('%Y-%m-%d')
-        car.status = "Pagamento pendente"
+        car.status = "Compra finalizada"
         car.save()
         
         Car.objects.create(
@@ -626,7 +663,7 @@ def my_sales(request):
     for purchase in purchasesCompleted:
         for car in cars:
             # Verifique se a venda é do funcionário e se o status não é 'Pagamento pendente'
-            if purchase.id_car.id == car.id and car.status != 'Pagamento pendente':
+            if purchase.id_car.id == car.id:
                 product = Product.objects.get(pk=purchase.id_product.id)
                 sale_date = car.date
 
@@ -662,9 +699,11 @@ def my_sales(request):
         'total_quantity': total_quantity,  # Adicione a quantidade total ao contexto
         'months': range(1, 13),  # Adicione os meses disponíveis
         'years': range(2020, datetime.today().year + 1),  # Ajuste conforme necessário
+        'selected_month': selected_month,
+        'selected_year': selected_year
     }
 
-    return render(request, 'fla_loja/my_orders.html', context)
+    return render(request, 'fla_loja/my_sales.html', context)
 
 
 
@@ -750,7 +789,7 @@ def sales(request):
     selected_year = request.GET.get('year')
 
     # Obter todas as vendas completadas
-    cars = Car.objects.exclude(status='Pagamento pendente')  # Excluir os carrinhos com pagamento pendente
+    cars = Car.objects.all()  # Excluir os carrinhos com pagamento pendente
     purchasesCompleted = PurchasesCompleted.objects.all()
 
     # Dicionário para armazenar produtos agrupados
@@ -796,6 +835,8 @@ def sales(request):
         'total_quantity_sold': total_quantity_sold,  # Adicionar ao contexto
         'months': range(1, 13),  # Adicione os meses disponíveis
         'years': range(2020, datetime.today().year + 1),  # Ajuste conforme necessário
+        'selected_month': selected_month,
+        'selected_year': selected_year
     }
 
     return render(request, 'fla_loja/sales.html', context)
@@ -814,7 +855,7 @@ def individual_sale(request, product_id):
         payment_method = request.POST.get("payment_method")
         cupom = request.POST.get("cupom", "").upper().strip()
         date_purchased = datetime.today().strftime('%Y-%m-%d')
-        status = 'Pagamento pendente'
+        status = 'Compra finalizada'
 
         client = Client.objects.get(pk=client_id)
         employee = Employee.objects.get(pk=employee_id)

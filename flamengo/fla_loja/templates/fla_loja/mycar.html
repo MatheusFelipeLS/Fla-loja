@@ -46,9 +46,11 @@
     </table>
     <div style="display: flex; flex-direction: row; margin-top: 2rem;">
       <h3 style="margin-right: 2rem;">Preço total da compra: R${{ total_price }}</h3>
-      <td>
-        <a href="{% url 'fla_loja:buycar'%}" class="btn btn-primary">Comprar</a>
-      </td>
+      {% if car %}
+        <td>
+          <a href="{% url 'fla_loja:buycar'%}" class="btn btn-primary">Comprar</a>
+        </td>
+      {% endif %}
     </div>
   </div>
 </main>

@@ -32,6 +32,7 @@ class Car(models.Model):
   date = models.DateField("Date purchased")
   payment_method = models.CharField(max_length=20, default='')
   status = models.CharField(max_length=30, default='Não finalizado')
+  cupomPercent = models.FloatField(default=0.0)
   
   
 class PurchasesNotCompleted(models.Model):

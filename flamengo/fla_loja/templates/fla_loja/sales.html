@@ -1,21 +1,31 @@
 {% extends 'fla_loja/base.html' %}
 
 {% block content %}
-<main class="main main--stock" style="padding: 20px; margin-bottom: 14rem;">
-
+<main class="main main--stock" style="padding: 20px; margin-bottom: 10rem;">
+<div style="display: flex; flex-direction: column;">
     <div class="filter-form" style="margin-bottom: 2rem;">
         <form method="GET" action="{% url 'fla_loja:sales' %}">
             <label for="month">Mês:</label>
             <select name="month">
+                {% if selected_month %}
+                    <option value="">{{ selected_month }}</option>  <!-- Opção para mostrar todos os meses -->
+                {% else %}
                 <option value="">Todos</option>  <!-- Opção para mostrar todos os meses -->
+                {% endif %}
+
                 {% for month in months %}
-                    <option value="{{ month }}"{% if month == request.GET.month|default:'' %} selected{% endif %}>{{ month }}</option>
+                    <option value="{{ month }}"{% if month == request.GET.month|default:'' %} selected {% endif %}>{{ month }}</option>
                 {% endfor %}
             </select>
 
             <label for="year">Ano:</label>
             <select name="year">
-                <option value="">Todos</option>  <!-- Opção para mostrar todos os anos -->
+                {% if selected_year %}
+                    <option value="">{{ selected_year }}</option>  <!-- Opção para mostrar todos os meses -->
+                {% else %}
+                    <option value="">Todos</option>  <!-- Opção para mostrar todos os meses -->
+                {% endif %}
+
                 {% for year in years %}
                     <option value="{{ year }}"{% if year == request.GET.year|default:'' %} selected{% endif %}>{{ year }}</option>
                 {% endfor %}
@@ -25,7 +35,7 @@
         </form>
     </div>
 
-    <div class="table-responsive" style="margin-top: 3rem;">
+    <div class="table-responsive" style="margin-top: 0.5rem;">
         <h4 style="margin-bottom: 1rem;">O total em vendas foi R$ {{ total_sales }}</h4>
         <h5 style="margin-bottom: 3rem;">Quantidade de produtos vendidos: {{ total_quantity_sold }}</h5>
         <table class="table table-bordered table-striped">
@@ -59,5 +69,6 @@
             </tbody>
         </table>
     </div>
+</div>
 </main>
 {% endblock %}
