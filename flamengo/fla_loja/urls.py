@@ -37,7 +37,6 @@ urlpatterns = [
     path('myorders/', views.myorders, name='myorders'),
     path('addtocar/<int:_product_id>/', views.addtocar, name='addtocar'),
     path('buycar/', views.buycar, name='buycar'),
-    path('paycar/<int:_id_car>', views.paycar, name='paycar'),
 
     # +++++++++++++++++++++++++++  Vendedores  +++++++++++++++++++++++++++
     path('employee/', views.employee_detail_autoview, name='employee_detail_autoview'),
@@ -46,8 +45,6 @@ urlpatterns = [
     # +++++++++++++++++++++++++++  Vendas  +++++++++++++++++++++++++++
     path('sales/', views.sales, name='sales'),
     path('sale/<int:product_id>/', views.individual_sale, name='individual_sale'),
-    path('delete_sale/<int:_id>/', views.delete_sale, name='delete_sale'),
-    path('edit_sale/<int:_id>/', views.edit_sale, name='edit_sale'),
 
     # +++++++++++++++++++++++++++  Estoque  +++++++++++++++++++++++++++
     path('stock/', views.stock, name='stock'),

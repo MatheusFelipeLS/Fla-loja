@@ -501,58 +501,6 @@ def myorders(request):
     return render(request, 'fla_loja/my_orders.html', context)
 
 
-
-# def myorders(request):
-#     cars = Car.objects.filter(id_client=request.session.get('id'))
-#     selected_month = request.GET.get('month')
-#     selected_year = request.GET.get('year')
-    
-#     purchasesCompleted = PurchasesCompleted.objects.all()
-                
-#     purchased_products_dict = {}
-    
-#     for purchase in purchasesCompleted:
-#         for car in cars:
-#             # Verifique se a venda é do funcionário e se o status não é 'Pagamento pendente'
-#             if purchase.id_car.id == car.id:
-#                 product = Product.objects.get(pk=purchase.id_product.id)
-#                 sale_date = car.date
-
-#                 # Filtrar por mês e ano, se selecionados
-#                 if (not selected_month or sale_date.month == int(selected_month)) and \
-#                    (not selected_year or sale_date.year == int(selected_year)):
-                    
-#                     # Agrupar produtos pelo ID
-#                     if product.id in purchased_products_dict:
-#                         purchased_products_dict[product.id]['quantity'] += purchase.quantity
-#                     else:
-#                         purchased_products_dict[product.id] = {
-#                             'name': product.name,
-#                             'quantity': purchase.quantity,
-#                             'price': product.price,
-#                             'image': product.image.url if product.image else None,
-#                             'status': car.status
-#                         }
-
-#     # Transformar dicionário em lista
-#     purchased_products = [
-#         {'id': product_id, **details}
-#         for product_id, details in purchased_products_dict.items()
-#     ]
-    
-#     context = {
-#         'isLogged': request.session.get('isLogged', False),
-#         'isEmployee': request.session.get('isEmployee', False),
-#         'purchased_products': purchased_products,
-#         'months': range(1, 13),  # Adicione os meses disponíveis
-#         'years': range(2020, datetime.today().year + 1),  # Ajuste conforme necessário
-#         'selected_month': selected_month,
-#         'selected_year': selected_year
-#     }
-    
-#     return render(request, 'fla_loja/my_orders.html', context)
-
-
 def addtocar(request, _product_id):
     if request.method == 'GET':
         product = Product.objects.get(pk=_product_id)
@@ -662,16 +610,6 @@ def buycar(request):
 
         return redirect('fla_loja:index')
 
-    
-
-def paycar(request, _id_car):
-    car = Car.objects.get(pk=_id_car)
-    
-    car.status = 'Compra finalizada'
-    car.save()
-    
-    return redirect('fla_loja:myorders')
-
 
 # +++++++++++++++++++++++++++++++++++++  Employees  +++++++++++++++++++++++++++++++++++++
 @api_view(['GET'])
@@ -754,83 +692,7 @@ def my_sales(request):
     return render(request, 'fla_loja/my_sales.html', context)
 
 
-
-
-
-
-
-
-# def my_sales(request):
-#     cars = Car.objects.filter(id_employee=request.session.get('id'))
-#     purchasesCompleted = PurchasesCompleted.objects.all()
-    
-#     purshased_products = []
-#     total_sales = 0
-#     for purchase in purchasesCompleted:
-#         for car in cars:
-#             if(purchase.id_car.id == car.id and car.status != 'Pagamento pendente'):
-#                 product = Product.objects.get(pk=purchase.id_product.id)
-#                 total_sales += purchase.quantity * product.price
-#                 purshased_products.append(
-#                     {
-#                         'id': car.id,
-#                         'name': product.name,
-#                         'quantity': purchase.quantity,
-#                         'price': product.price,
-#                         'image': product.image.url if product.image else None,
-#                         'status': car.status
-#                     }
-#                 )
-    
-#     context = {
-#         'isLogged': request.session.get('isLogged', False),
-#         'isEmployee': request.session.get('isEmployee', False),
-#         'purshased_products': purshased_products,
-#         'total_sales': total_sales
-#     }
-    
-#     return render(request, 'fla_loja/my_orders.html', context)
-
-
 # +++++++++++++++++++++++++++++++++++++  Sales  +++++++++++++++++++++++++++++++++++++
-@api_view(['GET'])
-def sales_true(request):
-    sales = Sale.objects.select_related('id_client', 'id_product', 'id_employee').all()
-    
-    # Preparar os dados para a tabela
-    sales_data = []
-    for sale in sales:
-      client = "Indisp."
-      employee = "Indisp."
-      product = "Indisp."
-      total_price = sale.quantity
-      if sale.id_client:
-        client = sale.id_client.name
-      if sale.id_employee:
-        employee = sale.id_employee.name
-      if sale.id_product:
-        total_price *= sale.id_product.price
-        product = sale.id_product.name 
-      else:
-        total_price = ' Indisp.'
-        
-      sales_data.append({
-          'id': sale.id,  # Inclua o ID da venda aqui
-          'client_name': client,
-          'product_name': product,
-          'quantity': sale.quantity,
-          'total_price': total_price,
-          'employee_name': employee,  # Nome do vendedor
-          'date': sale.data.strftime('%Y-%m-%d')  # Data da compra no formato YYYY-MM-DD
-      })
-    
-    context = {
-        'sales_data': sales_data
-    }
-    
-    return render(request, 'fla_loja/sales.html', context)
-
-
 @api_view(['GET'])
 def sales(request):
     # Obtenha os parâmetros de filtragem do request
@@ -985,54 +847,6 @@ def individual_sale(request, product_id):
     )
 
 
-@api_view(['GET', 'POST', 'DELETE'])
-def delete_sale(request, _id):
-  if request.method == 'GET':
-    try:
-      sale_to_delete = Sale.objects.get(pk=_id)
-    except:
-      return Response(status=status.HTTP_404_NOT_FOUND)
-    
-    sale_to_delete.delete()
-    
-    return redirect('/sales/')
-
-
-@api_view(['GET', 'POST'])
-def edit_sale(request, _id):
-    sale = get_object_or_404(Sale, id=_id)
-    if sale.id_product:
-      product = get_object_or_404(Product, id=sale.id_product.id)
-    if sale.id_employee:
-      employee = get_object_or_404(Employee, id=sale.id_employee.id)
-    
-    if request.method == 'POST':
-        product.quantity_in_stock += sale.quantity
-        employee.sales_count += sale.quantity
-        form = SaleForm(request.POST, instance=sale)
-        if form.is_valid():
-            product.quantity_in_stock -= int(request.POST.get('quantity'))
-            
-            employee.sales_count -= int(request.POST.get('quantity'))
-            
-            prod_serializer = ProductSerializer(data=product)
-            if prod_serializer.is_valid():
-              prod_serializer.save()
-              
-            employee_serializer = EmployeeSerializer(data=employee)
-            if employee_serializer.is_valid():
-              employee_serializer.save()
-            
-            form.save()
-            return redirect('/sales/')
-        product.quantity_in_stock -= sale.quantity
-        employee.sales_count -= sale.quantity
-    else:
-        form = SaleForm(instance=sale)
-    
-    return render(request, 'fla_loja/edit_sale.html', { 'form': form, 'sale': sale })
-
-    
 # +++++++++++++++++++++++++++++++++++++  Estoque  +++++++++++++++++++++++++++++++++++++
 @api_view(['GET'])
 def stock(request):
