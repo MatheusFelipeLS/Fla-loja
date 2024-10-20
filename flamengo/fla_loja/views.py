@@ -601,29 +601,36 @@ def buycar(request):
         purchasesNotCompleted = PurchasesNotCompleted.objects.all()
     
         errors = False
+        total_price = 0
+        
         for purchase in purchasesNotCompleted:
-            if(purchase.id_car.id == car.id):
+            if purchase.id_car.id == car.id:
                 product = Product.objects.get(pk=purchase.id_product.id)
-                if(product.quantity_in_stock - purchase.quantity <= 0):
+                if product.quantity_in_stock - purchase.quantity <= 0:
                     messages.error(request, "Quantidade solicitada excede o estoque disponível.")
                     errors = True 
                     break
-        
+                
+                price_per_purchase = product.price * purchase.quantity
+                total_price += price_per_purchase
+
         if cupom:
             if cupom in CUPONS:
                 discount = CUPONS[cupom]
                 total_price *= (1 - discount)
+                car.cupomPercent = discount * 100  # Atribui o percentual de desconto do cupom
             else:
                 messages.error(request, "Cupom inválido.")  
                 errors = True
+        else:
+            car.cupomPercent = 0  # Quando nenhum cupom é inserido
 
         if errors:
             return redirect('fla_loja:mycar')
-            
-                
-        total_price = 0
+        
+        # Atualiza o estoque e cria registros de compras finalizadas
         for purchase in purchasesNotCompleted:
-            if(purchase.id_car.id == car.id):
+            if purchase.id_car.id == car.id:
                 product = Product.objects.get(pk=purchase.id_product.id)
                 product.quantity_in_stock -= purchase.quantity
                 product.save()
@@ -632,25 +639,19 @@ def buycar(request):
                     id_product=product,
                     quantity=purchase.quantity
                 )
-                
-                price_per_purchase = product.price * purchase.quantity
-                total_price += price_per_purchase
-                
                 purchase.delete()
-        
-        print("Cupom: ", cupom)
 
-
-                
         employee.sales_count += total_price
         employee.save()
-        
+
+        # Atualiza os detalhes do carrinho
         car.id_employee = employee
         car.payment_method = payment_method
         car.date = datetime.today().strftime('%Y-%m-%d')
         car.status = "Compra finalizada"
         car.save()
-        
+
+        # Cria um novo carrinho para o cliente
         Car.objects.create(
             id_client=Client.objects.get(pk=request.session.get('id')),
             status='Carrinho atual',
@@ -658,6 +659,7 @@ def buycar(request):
         )
 
         return redirect('fla_loja:index')
+
     
 
 def paycar(request, _id_car):
