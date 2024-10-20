@@ -21,6 +21,9 @@
           <li class="nav-item">
             <a class="nav-link active" style="color: red;" aria-current="page" href="/">Produtos</a>
           </li>
+          <li>
+            <a class="nav-link active" style="color: red;" aria-current="page" href="{% url 'fla_loja:popular_products' %}">Populares</a>
+          </li>
           {% if isEmployee %}
             <li class="nav-item">
               <a class="nav-link" style="color: red;" href="{% url 'fla_loja:clients' %}">Clientes</a>

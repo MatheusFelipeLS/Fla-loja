@@ -52,4 +52,6 @@ urlpatterns = [
     # +++++++++++++++++++++++++++  Estoque  +++++++++++++++++++++++++++
     path('stock/', views.stock, name='stock'),
     
+    path('popular_products/', views.popular_products, name='popular_products'),
+    
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -5,6 +5,7 @@ from django.contrib.auth import logout
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib import messages
 from django.utils.dateparse import parse_datetime
+from django.db.models import Count
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -1056,3 +1057,19 @@ def stock(request):
     }
     
     return render(request, 'fla_loja/stock.html', context)
+
+
+def popular_products(request):
+    # Agrupar as compras pelo produto e contar quantas vezes cada produto foi comprado
+    produtos_agrupados = PurchasesCompleted.objects.values('id_product').annotate(total_compras=Count('id_product')).order_by('-total_compras')[:3]
+
+    # Pegar os objetos de produto reais para exibir mais informações (ex.: nome)
+    produtos_populares = []
+    for item in produtos_agrupados:
+        produto = Product.objects.get(id=item['id_product'])
+        produtos_populares.append({
+            'produto': produto,
+            'total_compras': item['total_compras']
+        })
+
+    return render(request, 'fla_loja/produtos_populares.html', {'all_products': produtos_populares})

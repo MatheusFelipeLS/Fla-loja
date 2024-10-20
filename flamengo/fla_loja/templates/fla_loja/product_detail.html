@@ -20,12 +20,12 @@
         <div style="margin-bottom: 1rem;"></div>
         {% endif %}
 
-        {% if isLogged %}
+        {% if isLogged and not isEmployee %}
           <div>
             <a href="{% url 'fla_loja:individual_sale' product.id %}" class="btn btn-primary" style="margin-top: 10px; margin-right: 10px;">Comprar</a>
             <a href="{% url 'fla_loja:addtocar' product.id %}" class="btn btn-primary" style="margin-top: 10px;">Adicionar ao carrinho</a>
           </div>
-        {% else %}
+        {% elif not isLogged %}
           <a href="{% url 'fla_loja:sign_in' %}" class="btn btn-primary" style="margin-top: 10px;">Comprar</a>
         {% endif %}
       </div>
