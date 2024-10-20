@@ -443,37 +443,18 @@ def mycar(request):
     return render(request, 'fla_loja/mycar.html', context)
 
 
-
-
-
 def myorders(request):
     cars = Car.objects.filter(id_client=request.session.get('id'))
     selected_month = request.GET.get('month')
     selected_year = request.GET.get('year')
-    
+
     purchasesCompleted = PurchasesCompleted.objects.all()
-    
-    # purchased_products = []
-    # for purchase in purchasesCompleted:
-    #     for car in cars:
-    #         if(purchase.id_car.id == car.id):
-    #             product = Product.objects.get(pk=purchase.id_product.id)
-    #             purchased_products.append(
-    #                 {
-    #                     'id': car.id,
-    #                     'name': product.name,
-    #                     'quantity': purchase.quantity,
-    #                     'price': product.price,
-    #                     'image': product.image.url if product.image else None,
-    #                     'status': car.status
-    #                 }
-    #             )
-                
-    purchased_products_dict = {}
-    
+
+    purchased_products_dict = []
+
     for purchase in purchasesCompleted:
         for car in cars:
-            # Verifique se a venda é do funcionário e se o status não é 'Pagamento pendente'
+            # Verifique se a venda é do cliente e se o status não é 'Pagamento pendente'
             if purchase.id_car.id == car.id:
                 product = Product.objects.get(pk=purchase.id_product.id)
                 sale_date = car.date
@@ -481,36 +462,93 @@ def myorders(request):
                 # Filtrar por mês e ano, se selecionados
                 if (not selected_month or sale_date.month == int(selected_month)) and \
                    (not selected_year or sale_date.year == int(selected_year)):
-                    
-                    # Agrupar produtos pelo ID
-                    if product.id in purchased_products_dict:
-                        purchased_products_dict[product.id]['quantity'] += purchase.quantity
-                    else:
-                        purchased_products_dict[product.id] = {
+
+                    # Calcular o preço total com desconto
+                    discount = car.cupomPercent / 100 if car.cupomPercent else 0
+                    price_after_discount = product.price * (1 - discount)
+
+                    # Verificar se já existe um produto com o mesmo ID e preço após o desconto
+                    found = False
+                    for item in purchased_products_dict:
+                        if item['id'] == product.id and item['price'] == price_after_discount:
+                            item['quantity'] += purchase.quantity
+                            found = True
+                            break
+
+                    # Se não encontrado, adicionar um novo produto ao dicionário
+                    if not found:
+                        purchased_products_dict.append({
+                            'id': product.id,
                             'name': product.name,
                             'quantity': purchase.quantity,
-                            'price': product.price,
+                            'price': price_after_discount,
                             'image': product.image.url if product.image else None,
                             'status': car.status
-                        }
+                        })
 
-    # Transformar dicionário em lista
-    purchased_products = [
-        {'id': product_id, **details}
-        for product_id, details in purchased_products_dict.items()
-    ]
-    
     context = {
         'isLogged': request.session.get('isLogged', False),
         'isEmployee': request.session.get('isEmployee', False),
-        'purchased_products': purchased_products,
+        'purchased_products': purchased_products_dict,
         'months': range(1, 13),  # Adicione os meses disponíveis
         'years': range(2020, datetime.today().year + 1),  # Ajuste conforme necessário
         'selected_month': selected_month,
         'selected_year': selected_year
     }
-    
+
     return render(request, 'fla_loja/my_orders.html', context)
+
+
+
+# def myorders(request):
+#     cars = Car.objects.filter(id_client=request.session.get('id'))
+#     selected_month = request.GET.get('month')
+#     selected_year = request.GET.get('year')
+    
+#     purchasesCompleted = PurchasesCompleted.objects.all()
+                
+#     purchased_products_dict = {}
+    
+#     for purchase in purchasesCompleted:
+#         for car in cars:
+#             # Verifique se a venda é do funcionário e se o status não é 'Pagamento pendente'
+#             if purchase.id_car.id == car.id:
+#                 product = Product.objects.get(pk=purchase.id_product.id)
+#                 sale_date = car.date
+
+#                 # Filtrar por mês e ano, se selecionados
+#                 if (not selected_month or sale_date.month == int(selected_month)) and \
+#                    (not selected_year or sale_date.year == int(selected_year)):
+                    
+#                     # Agrupar produtos pelo ID
+#                     if product.id in purchased_products_dict:
+#                         purchased_products_dict[product.id]['quantity'] += purchase.quantity
+#                     else:
+#                         purchased_products_dict[product.id] = {
+#                             'name': product.name,
+#                             'quantity': purchase.quantity,
+#                             'price': product.price,
+#                             'image': product.image.url if product.image else None,
+#                             'status': car.status
+#                         }
+
+#     # Transformar dicionário em lista
+#     purchased_products = [
+#         {'id': product_id, **details}
+#         for product_id, details in purchased_products_dict.items()
+#     ]
+    
+#     context = {
+#         'isLogged': request.session.get('isLogged', False),
+#         'isEmployee': request.session.get('isEmployee', False),
+#         'purchased_products': purchased_products,
+#         'months': range(1, 13),  # Adicione os meses disponíveis
+#         'years': range(2020, datetime.today().year + 1),  # Ajuste conforme necessário
+#         'selected_month': selected_month,
+#         'selected_year': selected_year
+#     }
+    
+#     return render(request, 'fla_loja/my_orders.html', context)
 
 
 def addtocar(request, _product_id):
@@ -667,28 +705,34 @@ def my_sales(request):
                 product = Product.objects.get(pk=purchase.id_product.id)
                 sale_date = car.date
 
+                # Calcular o preço com o desconto aplicado (se houver)
+                discount = car.cupomPercent if car.cupomPercent else 0
+                discounted_price = product.price * (1 - discount / 100)
+
                 # Filtrar por mês e ano, se selecionados
                 if (not selected_month or sale_date.month == int(selected_month)) and \
                    (not selected_year or sale_date.year == int(selected_year)):
-                    total_sales += purchase.quantity * product.price
+                    total_sales += purchase.quantity * discounted_price
                     total_quantity += purchase.quantity  # Atualize a quantidade total
-                    
-                    # Agrupar produtos pelo ID
-                    if product.id in purchased_products_dict:
-                        purchased_products_dict[product.id]['quantity'] += purchase.quantity
+
+                    # Use o ID do produto e o preço como chave para distinguir produtos com preços diferentes
+                    product_key = f'{product.id}_{discounted_price}'
+
+                    if product_key in purchased_products_dict:
+                        purchased_products_dict[product_key]['quantity'] += purchase.quantity
                     else:
-                        purchased_products_dict[product.id] = {
+                        purchased_products_dict[product_key] = {
                             'name': product.name,
                             'quantity': purchase.quantity,
-                            'price': product.price,
+                            'price': discounted_price,
                             'image': product.image.url if product.image else None,
                             'status': car.status
                         }
 
     # Transformar dicionário em lista
     purchased_products = [
-        {'id': product_id, **details}
-        for product_id, details in purchased_products_dict.items()
+        {'id': product_key.split('_')[0], **details}
+        for product_key, details in purchased_products_dict.items()
     ]
 
     context = {
@@ -704,6 +748,7 @@ def my_sales(request):
     }
 
     return render(request, 'fla_loja/my_sales.html', context)
+
 
 
 
@@ -803,28 +848,33 @@ def sales(request):
                 product = Product.objects.get(pk=purchase.id_product.id)
                 sale_date = car.date
 
+                # Aplicar desconto se houver cupom
+                discount_percentage = car.cupomPercent if car.cupomPercent else 0
+                discounted_price = product.price * (1 - discount_percentage / 100)
+
                 # Filtrar por mês e ano, se selecionados
                 if (not selected_month or sale_date.month == int(selected_month)) and \
                    (not selected_year or sale_date.year == int(selected_year)):
-                    total_sales += purchase.quantity * product.price
+                    total_sales += purchase.quantity * discounted_price
                     total_quantity_sold += purchase.quantity  # Incrementa a quantidade de produtos vendidos
                     
-                    # Agrupar produtos pelo ID
-                    if product.id in purchased_products_dict:
-                        purchased_products_dict[product.id]['quantity'] += purchase.quantity
+                    # Agrupar produtos pelo ID e preço
+                    product_key = f'{product.id}_{discounted_price}'
+                    if product_key in purchased_products_dict:
+                        purchased_products_dict[product_key]['quantity'] += purchase.quantity
                     else:
-                        purchased_products_dict[product.id] = {
+                        purchased_products_dict[product_key] = {
                             'name': product.name,
                             'quantity': purchase.quantity,
-                            'price': product.price,
+                            'price': discounted_price,
                             'image': product.image.url if product.image else None,
                             'status': car.status
                         }
 
     # Transformar dicionário em lista
     purchased_products = [
-        {'id': product_id, **details}
-        for product_id, details in purchased_products_dict.items()
+        {'id': product_key.split('_')[0], **details}
+        for product_key, details in purchased_products_dict.items()
     ]
 
     context = {
@@ -875,7 +925,6 @@ def individual_sale(request, product_id):
             if cupom in CUPONS:
                 discount = CUPONS[cupom]
             else:
-                print(cupom)
                 messages.error(request, "Cupom inválido.")
                 return render(request, 'fla_loja/sale.html', {'product': product})
         else:
@@ -901,7 +950,8 @@ def individual_sale(request, product_id):
             id_employee=employee,
             date=parsed_date,
             status=status,
-            payment_method=payment_method
+            payment_method=payment_method,
+            cupomPercent=discount * 100
         )
         
         last_car = Car.objects.last()

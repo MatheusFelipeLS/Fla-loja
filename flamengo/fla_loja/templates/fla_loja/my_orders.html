@@ -36,10 +36,6 @@
     </div>
 
     <div class="table-responsive" style="margin-top: 0.5rem;">
-        {% if isEmployee %}
-            <h4 style="margin-bottom: 1rem;">O total em vendas foi R$ {{ total_sales }}</h4>
-            <h5 style="margin-bottom: 3rem;">Quantidade de produtos vendidos: {{ total_quantity }}</h5>
-        {% endif %}
         <table class="table table-bordered table-striped">
             <thead class="table-dark" style="background-color: black; color: red;">
                 <tr>
@@ -63,7 +59,7 @@
                         {% endif %}
                     </td>
                     <td>{{ purchase.name }}</td>
-                    <td>R$ {{ purchase.price }} por unidade</td>
+                    <td>R$ {{ purchase.price|floatformat:2 }} por unidade</td>  <!-- Exibir o preço com desconto -->
                     <td>{{ purchase.quantity }}</td>
                     {% if not isEmployee %}
                         {% if purchase.status == 'Pagamento pendente' %}
@@ -75,7 +71,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6">Nenhum produto disponível.</td> <!-- Atualize a coluna colspan para 6 -->
+                    <td colspan="6">Nenhum produto disponível.</td>
                 </tr>
                 {% endfor %}
             </tbody>
