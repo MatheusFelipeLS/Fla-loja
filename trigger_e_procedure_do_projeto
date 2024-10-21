@@ -1,0 +1,74 @@
+CREATE OR REPLACE PROCEDURE updt_product(
+    p_id INT,
+    p_name VARCHAR,
+    p_price NUMERIC,
+    p_quantity_in_stock INT,
+    p_description TEXT,
+    p_category VARCHAR,
+    p_made_in VARCHAR
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    UPDATE fla_loja_product
+    SET 
+        name = COALESCE(p_name, name),
+        price = COALESCE(p_price, price),
+        quantity_in_stock = COALESCE(p_quantity_in_stock, quantity_in_stock),
+        description = COALESCE(p_description, description),
+        category = COALESCE(p_category, category),
+        made_in = COALESCE(p_made_in, made_in)
+    WHERE id = p_id;
+
+    -- Verifica se o produto foi atualizado, se não, gera um erro
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Product with ID % does not exist', p_id;
+    END IF;
+END;
+$$;
+
+
+CREATE TABLE fat_conta (
+    nr_atendimento SERIAL PRIMARY KEY,
+    cliente_id INT,
+    produto_id VARCHAR(255) NOT NULL, 
+    receita DECIMAL(10, 2) NOT NULL, 
+    vendedor_id VARCHAR(255) NOT NULL,
+    data_compra DATE NOT NULL
+);
+
+
+CREATE OR REPLACE FUNCTION add_to_fat_conta()
+RETURNS TRIGGER AS $$
+DECLARE
+    cliente_id INT;
+    vendedor_id INT;
+    product_price DECIMAL(10, 2);
+BEGIN
+    -- Obtém o cliente associado ao carro da compra mais recente
+    SELECT id_client_id INTO cliente_id 
+    FROM fla_loja_car 
+    WHERE id = NEW.id_car_id;
+
+    -- Obtém o vendedor associado ao carro da compra mais recente
+    SELECT id_employee_id INTO vendedor_id 
+    FROM fla_loja_car 
+    WHERE id = NEW.id_car_id;
+
+    -- Obtém o preço do produto da compra mais recente
+    SELECT price INTO product_price 
+    FROM fla_loja_product 
+    WHERE id = NEW.id_product_id;
+
+    -- Insere na tabela fat_conta
+    INSERT INTO fat_conta (cliente_id, produto_id, receita, vendedor_id, data_compra)
+    VALUES (cliente_id, NEW.id_product_id, NEW.quantity * product_price, vendedor_id, CURRENT_DATE);
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+
+SELECT * FROM fla_loja_car;
+
+SELECT * FROM fat_conta;

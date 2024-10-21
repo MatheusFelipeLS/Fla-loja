@@ -3,7 +3,7 @@
 {% block content %}
 <main class="main main--stock" style="padding: 20px;">
 
-  <div class="table-responsive">
+  <div class="table-responsive" style="margin-top: 2rem;">
     <table class="table table-bordered table-striped">
       <thead class="table-dark" style="background-color: black; color: red;">
         <tr>
@@ -39,5 +39,8 @@
       </tbody>
     </table>
   </div>
+  {% if not stock_data %}
+  <div style="margin-bottom: 24rem;"></div>
+  {% endif %}
 </main>
 {% endblock %}

@@ -15,18 +15,4 @@ class Migration(migrations.Migration):
             name='cupomPercent',
             field=models.FloatField(default=0.0),
         ),
-        
-        migrations.RunSQL(
-            sql="""
-                CREATE PROCEDURE get_low_stock_products(
-                    IN threshold INT
-                )
-                BEGIN
-                    SELECT *
-                    FROM Product
-                    WHERE quantity_in_stock < threshold;
-                END;
-            """,
-            reverse_sql="DROP PROCEDURE IF EXISTS get_low_stock_products;"
-        ),
     ]

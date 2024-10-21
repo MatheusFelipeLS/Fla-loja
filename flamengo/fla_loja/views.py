@@ -5,8 +5,8 @@ from django.contrib.auth import logout
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib import messages
 from django.utils.dateparse import parse_datetime
-from django.db import connection
 from django.db.models import Count
+from django.db import connection
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -137,6 +137,29 @@ def product_detail(request, _id):
     return HttpResponse(template.render(context, request))
 
 
+def call_get_low_stock_products():
+    with connection.cursor() as cursor:
+        cursor.execute("CALL get_low_stock_products()")
+
+        # Fetch todos os resultados
+        products = cursor.fetchall()
+
+    return products
+
+
+def low_stock_view(request):
+    low_stock_products = call_get_low_stock_products()
+    return render(
+        request, 
+        'low_stock.html', 
+                  {
+                    'isLogged': request.session.get('isLogged', False),
+                    'isEmployee': request.session.get('isEmployee', False),
+                    'products': low_stock_products,
+                }
+            )
+
+
 @api_view(['GET', 'POST'])
 def filter_products(request):
     if request.method == 'GET':
@@ -151,6 +174,19 @@ def filter_products(request):
     
     elif request.method == 'POST':
         products = Product.objects.all()
+        
+        if request.POST.get("checkbox_less5") == '':
+            low_stock_products = call_get_low_stock_products()
+            return render(
+                request, 
+                "fla_loja/filtered_products.html",
+                {
+                    'isLogged': request.session.get('isLogged', False),
+                    'isEmployee': request.session.get('isEmployee', False),
+                    'all_products': low_stock_products
+                }
+            )
+            # products = products.filter(quantity_in_stock__lte=4)
         
         if request.POST.get("checkbox_name") == '':
             name = request.POST.get("name")
@@ -172,9 +208,6 @@ def filter_products(request):
             
         if request.POST.get("checkbox_mari") == '':
             products = products.filter(made_in__exact='Mari')
-            
-        if request.POST.get("checkbox_less5") == '':
-            products = products.filter(quantity_in_stock__lte=4)
         
         return render(
             request, 
@@ -189,6 +222,85 @@ def filter_products(request):
 
 @api_view(['GET', 'POST'])
 def edit_product(request, _id):
+    product = Product.objects.get(pk=_id)
+    
+    if not product:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = ProductSerializer(product)
+        template = loader.get_template("fla_loja/edit_product.html")
+        context = {
+            'isLogged': request.session.get('isLogged', False),
+            'isEmployee': request.session.get('isEmployee', False),
+            "product": serializer.data,
+        }
+        return HttpResponse(template.render(context, request))
+
+    if request.method == 'POST':
+        data = request.data.copy()
+        print("id: ", _id)
+
+        # Verificação manual para preço e quantidade em estoque
+        try:
+            price = float(data.get('price', 0))
+            quantity_in_stock = int(data.get('quantity_in_stock', 0))
+
+            errors = False
+            if price < 0:
+                messages.error(request, "O preço não pode ser negativo.")
+                errors = True
+
+            if quantity_in_stock < 0:
+                messages.error(request, "A quantidade em estoque não pode ser negativa.")
+                errors = True
+            
+            if errors:
+                return render(
+                    request, 
+                    "fla_loja/edit_product.html", 
+                    {"product": data})
+
+        except ValueError as e:
+            messages.error(request, f"Erro nos dados fornecidos: {e}")
+            return render(request, "fla_loja/edit_product.html", {"product": data})
+
+        # Se tudo estiver correto, chamar a stored procedure para atualizar o produto
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute('CALL updt_product(%s, %s, %s, %s, %s, %s, %s)', [
+                    _id,
+                    data.get('name'),
+                    price,
+                    quantity_in_stock,
+                    data.get('description'),
+                    data.get('category'),
+                    data.get('made_in'),
+                ])
+                
+                product.refresh_from_db()
+                
+
+            # Redireciona para a página de detalhes do produto após a atualização
+            return redirect('/')
+        
+        except Exception as e:
+            print(f"exception {e}")
+            raise e
+            messages.error(request, f"Erro ao atualizar o produto: {e}")
+            return render(request, "fla_loja/edit_product.html", {"product": data})
+
+    return render(request, 
+                  "fla_loja/edit_product.html", 
+                  {
+                    'isLogged': request.session.get('isLogged', False),
+                    'isEmployee': request.session.get('isEmployee', False),
+                    "product": data
+                    }
+                )
+
+
+def edit_product_old(request, _id):
     try:
         product = Product.objects.get(pk=_id)
     except Product.DoesNotExist:
@@ -235,7 +347,15 @@ def edit_product(request, _id):
             # Redireciona para a página de detalhes do produto
             return redirect('fla_loja:product', _id=_id)
         
-        return render(request, "fla_loja/edit_product.html", {"product": data})
+        return render(
+            request, 
+            "fla_loja/edit_product.html", 
+            {
+                'isLogged': request.session.get('isLogged', False),
+                'isEmployee': request.session.get('isEmployee', False),
+                "product": data
+            }
+        )
 
 
 @api_view(['GET', 'POST'])
@@ -578,6 +698,16 @@ def buycar(request):
         if errors:
             return redirect('fla_loja:mycar')
         
+        
+        car.id_employee = employee
+        car.payment_method = payment_method
+        car.date = datetime.today().strftime('%Y-%m-%d')
+        car.status = "Compra finalizada"
+        car.save()
+        
+        employee.sales_count += total_price
+        employee.save()
+        
         # Atualiza o estoque e cria registros de compras finalizadas
         for purchase in purchasesNotCompleted:
             if purchase.id_car.id == car.id:
@@ -589,19 +719,10 @@ def buycar(request):
                     id_product=product,
                     quantity=purchase.quantity
                 )
+                
                 purchase.delete()
 
-        employee.sales_count += total_price
-        employee.save()
 
-        # Atualiza os detalhes do carrinho
-        car.id_employee = employee
-        car.payment_method = payment_method
-        car.date = datetime.today().strftime('%Y-%m-%d')
-        car.status = "Compra finalizada"
-        car.save()
-
-        # Cria um novo carrinho para o cliente
         Car.objects.create(
             id_client=Client.objects.get(pk=request.session.get('id')),
             status='Carrinho atual',

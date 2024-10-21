@@ -19,7 +19,7 @@ urlpatterns = [
     # +++++++++++++++++++++++++++  Produtos  +++++++++++++++++++++++++++
     path('product/<str:_id>', views.product_detail, name='product'),
     path('products/', views.filter_products, name='filter_products'),
-    path('product/edit/<str:_id>', views.edit_product, name='edit_product'),
+    path('product/edit/<int:_id>', views.edit_product, name='edit_product'),
     path('product/create/', views.create_product, name='create_product'),
     path('product/delete/<str:_id>', views.delete_product, name='delete_product'),
 

@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: bitnami/postgresql:latest
+    ports:
+      - '5431:5432'
+    environment:
+      - POSTGRES_USER=fla_loja
+      - POSTGRES_PASSWORD=fla_loja
+      - POSTGRES_DB=fla_loja
+    volumes:
+      - fla_loja_pg_data:/bitnami/postgresql
+
+volumes:
+  fla_loja_pg_data:
