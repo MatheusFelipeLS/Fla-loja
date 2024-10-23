@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.utils.dateparse import parse_datetime
 from django.db.models import Count
 from django.db import connection
+from django.core.files.storage import default_storage
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -239,7 +240,6 @@ def edit_product(request, _id):
 
     if request.method == 'POST':
         data = request.data.copy()
-        print("id: ", _id)
 
         # Verificação manual para preço e quantidade em estoque
         try:
@@ -267,8 +267,13 @@ def edit_product(request, _id):
 
         # Se tudo estiver correto, chamar a stored procedure para atualizar o produto
         try:
+            image = request.FILES.get('image')
+            if image:
+                image_path = default_storage.save(f'fla_loja/products/{image.name}', image)
+            else:
+                image_path = None
             with connection.cursor() as cursor:
-                cursor.execute('CALL updt_product(%s, %s, %s, %s, %s, %s, %s)', [
+                cursor.execute('CALL updt_product(%s, %s, %s, %s, %s, %s, %s, %s)', [
                     _id,
                     data.get('name'),
                     price,
@@ -276,6 +281,7 @@ def edit_product(request, _id):
                     data.get('description'),
                     data.get('category'),
                     data.get('made_in'),
+                    image_path
                 ])
                 
                 product.refresh_from_db()
